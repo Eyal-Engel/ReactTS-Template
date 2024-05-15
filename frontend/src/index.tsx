@@ -11,8 +11,9 @@ root.render(
   <Box
     sx={{
       display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
+
+      // height: "100vh",
+      // width: "100vw",
     }}
   >
     <CssBaseline />
