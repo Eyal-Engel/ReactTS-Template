@@ -1,6 +1,6 @@
 import { IconButton, useTheme } from "@mui/material";
 import React from "react";
-import Brightness4Icon from "@mui/icons-material/Brightness4";
+import DarkMode from "@mui/icons-material/DarkMode";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 
 type SwitchModeProps = {
@@ -16,7 +16,7 @@ const SwitchMode: React.FC<SwitchModeProps> = ({
   const theme = useTheme();
   return (
     <IconButton onClick={toggleDarkTheme} color="inherit">
-      {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+      {darkMode ? <Brightness7Icon /> : <DarkMode />}
     </IconButton>
   );
 };

@@ -7,8 +7,10 @@ import { prefixer } from "stylis";
 import { CacheProvider } from "@emotion/react";
 import SwitchMode from "../../utils/SwitchMode";
 import { Outlet } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
-
+import { Box, Button, Drawer, IconButton, Typography } from "@mui/material";
+import logistic_corp_logo from "../../assets/pictures/logistic_corp_logo.png";
+import mekalr_logo from "../../assets/pictures/mekalr_logo.png";
+import { Close, Menu } from "@mui/icons-material";
 const cacheRtl = createCache({
   key: "muirtl",
   stylisPlugins: [
@@ -19,6 +21,7 @@ const cacheRtl = createCache({
 
 const RootLayout = () => {
   const [darkMode, setDarkMode] = useState(true);
+  const [drawerMode, setDrawerMode] = useState(false);
 
   const toggleDarkTheme = () => {
     setDarkMode(!darkMode);
@@ -57,16 +60,57 @@ const RootLayout = () => {
             backgroundColor: "background.default",
             color: "text.primary",
             padding: "10px",
-            paddingTop: "20px",
             alignItems: "center",
             justifyContent: "space-between",
           }}
         >
+          <Box
+            sx={{
+              width: "100vw",
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+            }}
+          >
+            <Drawer
+              open={drawerMode}
+              onClose={() => {
+                setDrawerMode(false);
+              }}
+            >
+              list
+            </Drawer>
+            <IconButton
+              onClick={() => {
+                setDrawerMode(!drawerMode);
+              }}
+            >
+              {drawerMode ? <Close /> : <Menu />}
+            </IconButton>
+            <Box>
+              <img src={mekalr_logo} alt="meklar" style={{ width: 100 }} />
+              <img
+                src={logistic_corp_logo}
+                alt="logistic corp"
+                style={{ width: 100 }}
+              />
+            </Box>
+          </Box>
           <Outlet />
-          <SwitchMode darkMode={darkMode} toggleDarkTheme={toggleDarkTheme} />
-          <Typography variant="body1" >
-            פותח ע”י בית התוכנה - חיל הלוגיסטיקה
-          </Typography>
+
+          <Box
+            sx={{
+              alignSelf: "flex-end",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+            }}
+          >
+            <SwitchMode darkMode={darkMode} toggleDarkTheme={toggleDarkTheme} />
+            <Typography variant="body1">
+              פותח ע”י בית התוכנה - חיל הלוגיסטיקה
+            </Typography>
+          </Box>
         </Box>
       </ThemeProvider>
     </CacheProvider>
