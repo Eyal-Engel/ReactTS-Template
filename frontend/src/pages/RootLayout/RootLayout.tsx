@@ -59,7 +59,7 @@ const RootLayout = () => {
             padding: "10px",
             paddingTop: "20px",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: "space-between",
           }}
         >
           <Outlet />
