@@ -1,13 +1,3 @@
-//App.js
-
-// import React, { useState } from "react";
-// import { ThemeProvider, createTheme } from "@mui/material/styles";
-// import CssBaseline from "@mui/material/CssBaseline";
-// import createCache, { StylisPlugin } from "@emotion/cache";
-// import rtlPlugin from "stylis-plugin-rtl";
-// import { prefixer } from "stylis";
-// import { CacheProvider } from "@emotion/react";
-// import SwitchMode from "./utils/SwitchMode";
 import {
   Navigate,
   RouterProvider,
@@ -15,40 +5,9 @@ import {
 } from "react-router-dom";
 import RootLayout from "./pages/RootLayout/RootLayout";
 import ErrorNotFoundPage from "./pages/ErrorNotFoundPage/ErrorNotFoundPage";
+import ManegeUsers from "./pages/ManageUsers/ManegeUsers";
 
-// const cacheRtl = createCache({
-//   key: "muirtl",
-//   stylisPlugins: [
-//     prefixer as unknown as StylisPlugin,
-//     rtlPlugin as unknown as StylisPlugin,
-//   ],
-// });
 export default function App() {
-  // const [darkMode, setDarkMode] = useState(true);
-
-  // const toggleDarkTheme = () => {
-  //   setDarkMode(!darkMode);
-  // };
-
-  // const darkTheme = createTheme({
-  //   direction: "rtl",
-  //   palette: {
-  //     mode: darkMode ? "dark" : "light", // handle the dark mode state on toggle
-  //     primary: {
-  //       light: "#757ce8",
-  //       main: "#3f50b5",
-  //       dark: "#002884",
-  //       contrastText: "#fff",
-  //     },
-  //     secondary: {
-  //       light: "#ff7961",
-  //       main: "#f44336",
-  //       dark: "#ba000d",
-  //       contrastText: "#000",
-  //     },
-  //   },
-  // });
-
   const handleRouter = (token: boolean, managePerm: boolean) => {
     let router;
     router = createBrowserRouter([
@@ -59,6 +18,8 @@ export default function App() {
           { path: "/", element: <Navigate to="/login" replace /> },
           // { path: "/login", element: <LoginPage /> },
           // { path: "about", element: <AboutPage /> },
+          { path: "/users", element: <ManegeUsers /> },
+
           { path: "*", element: <ErrorNotFoundPage /> },
         ],
       },
@@ -70,6 +31,8 @@ export default function App() {
           element: <RootLayout />,
           children: [
             { path: "/", element: <Navigate to="/halalim" replace /> },
+            { path: "/users", element: <ManegeUsers /> },
+
             // { path: "about", element: <AboutPage /> },
             // {
             //   path: "/halalim",
