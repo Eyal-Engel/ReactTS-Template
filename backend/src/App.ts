@@ -26,7 +26,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 const PORT = process.env.SERVER_PORT || 5001;
 sequelize.sync().then(async () => {
   // comment the next row after the first run
-  await createAdminUser(); // Call the function to create the admin user
+  // await createAdminUser(); // Call the function to create the admin user
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
