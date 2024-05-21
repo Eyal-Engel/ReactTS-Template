@@ -1,13 +1,24 @@
 import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
+import { Secret } from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
+import { createHash } from "crypto";
 import User from "../models/schemas/User";
 import Command from "../models/schemas/Command";
-import { sha256 } from "js-sha256";
+
 dotenv.config();
 
+// Function to verify if err is of type JsonWebTokenError
+const isJsonWebTokenError = (err: any): err is jwt.JsonWebTokenError => {
+  return err.name === "JsonWebTokenError";
+};
+
+// ************************************************************************************
+// URL: http://localhost:5000/api/users
+// METHOD: GET
+// ************************************************************************************
 const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const users = await User.findAll({});
@@ -17,6 +28,11 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+// ************************************************************************************
+// URL: http://localhost:5000/api/users/{user_id}
+// EXAMPLE URL: http://localhost:5000/api/users/c0e670a0-918b-4f91-9a62-d6b0460c9752
+// METHOD: GET
+// ************************************************************************************
 const getUserById = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.params.userId;
   try {
@@ -32,6 +48,22 @@ const getUserById = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+// ************************************************************************************
+// URL: http://localhost:5000/api/users/signup
+// METHOD: POST
+// BODY:
+// {
+//   "credentials": {
+//     "privateNumber": "1234567",
+//     "fullName": "Israel Israeli",
+//     "password": "Aa123456",
+//     "commandId": "38dd4929-d496-4df7-824d-3fa01a640ca3",
+//     "editPerm": true,
+//     "managePerm": false
+//   },
+//   "userId": "c0e670a0-918b-4f91-9a62-d6b0460c9752"
+// }
+// ************************************************************************************
 const signup = async (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -42,7 +74,7 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
   const id = uuidv4();
 
   const { privateNumber, fullName, password, commandId, editPerm, managePerm } =
-    req.body.creditentials;
+    req.body.credentials;
   const userId = req.body.userId;
 
   try {
@@ -65,7 +97,9 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
       throw error;
     }
 
-    const hashedPassword = await sha256(password);
+    // Hashing the password using SHA-256
+    const hashedPassword = createHash("sha256").update(password).digest("hex");
+
     const newUser = await User.create({
       id,
       privateNumber,
@@ -82,17 +116,32 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+// ************************************************************************************
+// URL: http://localhost:5000/api/users/login
+// METHOD: POST
+// BODY:
+// {
+//   "privateNumber": "user_private_number",
+//   "password": "user_password"
+// }
+// ************************************************************************************
 const login = async (req: Request, res: Response, next: NextFunction) => {
   const { privateNumber, password } = req.body;
   const secretKey = process.env.SECRET_KEY;
 
   try {
-    const hashedPassword = await sha256(password);
-    const existingUser = await User.findOne({
-      where: { privateNumber, password: hashedPassword },
-    });
+    const existingUser = await User.findOne({ where: { privateNumber } });
 
     if (!existingUser) {
+      const error = new Error("Invalid credentials, could not log you in.");
+      (error as any).statusCode = 401;
+      throw error;
+    }
+
+    const isValidPassword =
+      existingUser.password ===
+      createHash("sha256").update(password).digest("hex");
+    if (!isValidPassword) {
       const error = new Error("Invalid credentials, could not log you in.");
       (error as any).statusCode = 401;
       throw error;
@@ -126,6 +175,22 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+// ************************************************************************************
+// URL: http://localhost:5000/api/users/{user_id}
+// EXAMPLE URL: http://localhost:5000/api/users/12e827cf-bdc8-4584-8c63-e67c338a8071
+// METHOD: PATCH
+// BODY:
+// {
+//   "updatedUserData": {
+//     "privateNumber": "1234567",
+//     "fullName": "full name",
+//     "commandId": "38dd4929-d496-4df7-824d-3fa01a640ca3",
+//     "editPerm": false,
+//     "managePerm": true
+//   },
+//   "userUpdatingUserId": "c0e670a0-918b-4f91-9a62-d6b0460c9752"
+// }
+// ************************************************************************************
 const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.params.userId;
   const { privateNumber, fullName, commandId, editPerm, managePerm } =
@@ -174,6 +239,16 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+// ************************************************************************************
+// URL:  http://localhost:5000/api/users/password/{userId}
+// EXAMPLE URL: http://localhost:5000/api/users/password/12e827cf-bdc8-4584-8c63-e67c338a8071
+// METHOD: POST
+// BODY:
+// {
+//   "newPassword": "new_password",
+//   "userUpdatingUserId": "user_id_of_who_fetch_this_request"
+// }
+// ************************************************************************************
 const changePassword = async (
   req: Request,
   res: Response,
@@ -199,7 +274,11 @@ const changePassword = async (
       throw error;
     }
 
-    const hashedPassword = await sha256(newPassword);
+    // Hashing the new password using SHA-256
+    const hashedPassword = createHash("sha256")
+      .update(newPassword)
+      .digest("hex");
+
     user.password = hashedPassword;
     await user.save();
 
@@ -211,19 +290,50 @@ const changePassword = async (
   }
 };
 
+// ************************************************************************************
+// URL:  http://localhost:5000/api/users/{userId}
+// EXAMPLE URL: http://localhost:5000/api/users/12e827cf-bdc8-4584-8c63-e67c338a8071
+// METHOD: DELETE
+// HEADERS:
+// Authorization: Bearer {TOKEN}
+// ************************************************************************************
+
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      const error = new Error("failed to delete user, try later.");
+      const error = new Error("Failed to delete user, try later.");
       (error as any).statusCode = 422;
       throw error;
     }
 
     const userId = req.params.userId;
-    const { userUpdatingUserId } = req.body;
+    const secretKey = process.env.SECRET_KEY;
+
+    // Check if authorization header exists and extract token
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      const error = new Error("Authorization header is missing.");
+      (error as any).statusCode = 401;
+      throw error;
+    }
+
+    // Split token
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      const error = new Error("Token is missing.");
+      (error as any).statusCode = 401;
+      throw error;
+    }
 
     try {
+      // Decode token
+      const decodedToken: any = jwt.verify(token, secretKey as Secret); // Type assertion to Secret
+      if (!decodedToken || !decodedToken.userId) {
+        throw new Error("Invalid token format or missing userId.");
+      }
+      const userUpdatingUserId = decodedToken.userId;
+
       const userRequested = await User.findByPk(userUpdatingUserId);
       if (!userRequested || !userRequested.managePerm) {
         return res
@@ -244,6 +354,10 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
 
       res.status(200).json({ message: `User ${userId} deleted successfully.` });
     } catch (err) {
+      // Handle JWT verification error using type guard
+      if (isJsonWebTokenError(err)) {
+        return res.status(401).json({ message: "Invalid token." });
+      }
       next(err);
     }
   } catch (err) {
