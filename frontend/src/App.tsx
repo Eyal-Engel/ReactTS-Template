@@ -32,7 +32,6 @@ export default function App() {
           children: [
             { path: "/", element: <Navigate to="/halalim" replace /> },
             { path: "/users", element: <ManegeUsers /> },
-
             // { path: "about", element: <AboutPage /> },
             // {
             //   path: "/halalim",
