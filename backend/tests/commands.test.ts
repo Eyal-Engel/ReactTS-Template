@@ -1,4 +1,4 @@
-// src/tests/commands.test.ts
+// still need to work on tests!
 
 import request from "supertest";
 import app from "../src/App"; // Adjust the path to your app
