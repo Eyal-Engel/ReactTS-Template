@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
-import { Secret } from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
 import { createHash } from "crypto";
@@ -10,7 +9,12 @@ import Command from "../models/schemas/Command";
 
 dotenv.config();
 
-// Function to verify if err is of type JsonWebTokenError
+const secretKey = process.env.SECRET_KEY as jwt.Secret;
+
+if (!secretKey) {
+  throw new Error("SECRET_KEY is not defined in the environment variables");
+}
+
 const isJsonWebTokenError = (err: any): err is jwt.JsonWebTokenError => {
   return err.name === "JsonWebTokenError";
 };
@@ -53,15 +57,12 @@ const getUserById = async (req: Request, res: Response, next: NextFunction) => {
 // METHOD: POST
 // BODY:
 // {
-//   "credentials": {
 //     "privateNumber": "1234567",
 //     "fullName": "Israel Israeli",
 //     "password": "Aa123456",
 //     "commandId": "38dd4929-d496-4df7-824d-3fa01a640ca3",
 //     "editPerm": true,
 //     "managePerm": false
-//   },
-//   "userId": "c0e670a0-918b-4f91-9a62-d6b0460c9752"
 // }
 // ************************************************************************************
 const signup = async (req: Request, res: Response, next: NextFunction) => {
@@ -72,22 +73,32 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
     return next(error);
   }
   const id = uuidv4();
-
   const { privateNumber, fullName, password, commandId, editPerm, managePerm } =
-    req.body.credentials;
-  const userId = req.body.userId;
+    req.body;
 
   try {
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ body: { errors: [{ message: "User does not exist" }] } });
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      const error = new Error("Authorization header is missing.");
+      (error as any).statusCode = 401;
+      throw error;
     }
-    if (!user.managePerm) {
+
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      const error = new Error("Token is missing.");
+      (error as any).statusCode = 401;
+      throw error;
+    }
+
+    const decodedToken = jwt.verify(token, secretKey) as any;
+    const userUpdatingUserId = decodedToken.userId;
+
+    const userRequested = await User.findByPk(userUpdatingUserId);
+    if (!userRequested || !userRequested.managePerm) {
       return res
         .status(403)
-        .json({ body: { errors: [{ message: "User is not authorized" }] } });
+        .json({ errors: [{ message: "User is not authorized" }] });
     }
 
     const existingUser = await User.findOne({ where: { privateNumber } });
@@ -97,7 +108,6 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
       throw error;
     }
 
-    // Hashing the password using SHA-256
     const hashedPassword = createHash("sha256").update(password).digest("hex");
 
     const newUser = await User.create({
@@ -127,7 +137,6 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
 // ************************************************************************************
 const login = async (req: Request, res: Response, next: NextFunction) => {
   const { privateNumber, password } = req.body;
-  const secretKey = process.env.SECRET_KEY;
 
   try {
     const existingUser = await User.findOne({ where: { privateNumber } });
@@ -147,24 +156,16 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       throw error;
     }
 
-    let token;
-    try {
-      if (!secretKey) {
-        throw new Error("Secret key is not defined.");
-      }
-      token = jwt.sign(
-        { userId: existingUser.id, privateNumber: existingUser.privateNumber },
-        secretKey,
-        { expiresIn: "168h" }
-      );
-    } catch (err) {
-      return next(err);
-    }
+    const token = jwt.sign(
+      { userId: existingUser.id, privateNumber: existingUser.privateNumber },
+      secretKey,
+      { expiresIn: "168h" }
+    );
 
     res.json({
       userId: existingUser.id,
       privateNumber: existingUser.privateNumber,
-      token: token,
+      token,
     });
   } catch (err: any) {
     if (err.statusCode) {
@@ -181,28 +182,40 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 // METHOD: PATCH
 // BODY:
 // {
-//   "updatedUserData": {
 //     "privateNumber": "1234567",
 //     "fullName": "full name",
 //     "commandId": "38dd4929-d496-4df7-824d-3fa01a640ca3",
 //     "editPerm": false,
 //     "managePerm": true
-//   },
-//   "userUpdatingUserId": "c0e670a0-918b-4f91-9a62-d6b0460c9752"
 // }
 // ************************************************************************************
 const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   const userId = req.params.userId;
-  const { privateNumber, fullName, commandId, editPerm, managePerm } =
-    req.body.updatedUserData;
-  const userUpdatingUserId = req.body.userUpdatingUserId;
+  const { privateNumber, fullName, commandId, editPerm, managePerm } = req.body;
 
   try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      const error = new Error("Authorization header is missing.");
+      (error as any).statusCode = 401;
+      throw error;
+    }
+
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      const error = new Error("Token is missing.");
+      (error as any).statusCode = 401;
+      throw error;
+    }
+
+    const decodedToken = jwt.verify(token, secretKey) as any;
+    const userUpdatingUserId = decodedToken.userId;
+
     const userRequested = await User.findByPk(userUpdatingUserId);
     if (!userRequested || !userRequested.managePerm) {
       return res
         .status(403)
-        .json({ body: { errors: [{ message: "User is not authorized" }] } });
+        .json({ errors: [{ message: "User is not authorized" }] });
     }
 
     const user = await User.findByPk(userId);
@@ -246,7 +259,6 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
 // BODY:
 // {
 //   "newPassword": "new_password",
-//   "userUpdatingUserId": "user_id_of_who_fetch_this_request"
 // }
 // ************************************************************************************
 const changePassword = async (
@@ -255,14 +267,31 @@ const changePassword = async (
   next: NextFunction
 ) => {
   const userId = req.params.userId;
-  const { newPassword, userUpdatingUserId } = req.body;
+  const { newPassword } = req.body;
 
   try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      const error = new Error("Authorization header is missing.");
+      (error as any).statusCode = 401;
+      throw error;
+    }
+
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      const error = new Error("Token is missing.");
+      (error as any).statusCode = 401;
+      throw error;
+    }
+
+    const decodedToken = jwt.verify(token, secretKey) as any;
+    const userUpdatingUserId = decodedToken.userId;
+
     const userRequested = await User.findByPk(userUpdatingUserId);
     if (!userRequested || !userRequested.managePerm) {
       return res
         .status(403)
-        .json({ body: { errors: [{ message: "User is not authorized" }] } });
+        .json({ errors: [{ message: "User is not authorized" }] });
     }
 
     const user = await User.findByPk(userId);
@@ -274,7 +303,6 @@ const changePassword = async (
       throw error;
     }
 
-    // Hashing the new password using SHA-256
     const hashedPassword = createHash("sha256")
       .update(newPassword)
       .digest("hex");
@@ -297,7 +325,6 @@ const changePassword = async (
 // HEADERS:
 // Authorization: Bearer {TOKEN}
 // ************************************************************************************
-
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req);
@@ -308,9 +335,6 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     const userId = req.params.userId;
-    const secretKey = process.env.SECRET_KEY;
-
-    // Check if authorization header exists and extract token
     const authHeader = req.headers.authorization;
     if (!authHeader) {
       const error = new Error("Authorization header is missing.");
@@ -318,7 +342,6 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
       throw error;
     }
 
-    // Split token
     const token = authHeader.split(" ")[1];
     if (!token) {
       const error = new Error("Token is missing.");
@@ -327,18 +350,14 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     }
 
     try {
-      // Decode token
-      const decodedToken: any = jwt.verify(token, secretKey as Secret); // Type assertion to Secret
-      if (!decodedToken || !decodedToken.userId) {
-        throw new Error("Invalid token format or missing userId.");
-      }
+      const decodedToken = jwt.verify(token, secretKey) as any;
       const userUpdatingUserId = decodedToken.userId;
 
       const userRequested = await User.findByPk(userUpdatingUserId);
       if (!userRequested || !userRequested.managePerm) {
         return res
           .status(403)
-          .json({ body: { errors: [{ message: "User is not authorized" }] } });
+          .json({ errors: [{ message: "User is not authorized" }] });
       }
 
       const user = await User.findByPk(userId);
@@ -354,7 +373,6 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
 
       res.status(200).json({ message: `User ${userId} deleted successfully.` });
     } catch (err) {
-      // Handle JWT verification error using type guard
       if (isJsonWebTokenError(err)) {
         return res.status(401).json({ message: "Invalid token." });
       }
