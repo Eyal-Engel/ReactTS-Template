@@ -8,14 +8,7 @@ const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
 );
 root.render(
-  <Box
-    sx={{
-      display: "flex",
-
-      // height: "100vh",
-      // width: "100vw",
-    }}
-  >
+  <Box>
     <CssBaseline />
     <App />
   </Box>

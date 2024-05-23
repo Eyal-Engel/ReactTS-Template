@@ -9,10 +9,10 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
-import React, { useState } from "react";
+import { useState } from "react";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
-import { Close, Menu, Palette } from "@mui/icons-material";
+import { Close, Menu } from "@mui/icons-material";
 
 const SideBar = () => {
   const [drawerMode, setDrawerMode] = useState(false);

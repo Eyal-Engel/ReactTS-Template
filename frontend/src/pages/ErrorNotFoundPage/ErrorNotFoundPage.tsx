@@ -1,11 +1,9 @@
-import { Button, Card, Paper, TextField, Typography } from "@mui/material";
-import React from "react";
+import { Paper, Typography } from "@mui/material";
 
 const ErrorNotFoundPage = () => {
   return (
-    <Paper sx={{p: 5, bgcolor: "GrayText"}}>
+    <Paper sx={{ p: 5, bgcolor: "GrayText" }}>
       <Typography variant="h4">העמוד שביקשת אינו קיים/דורש התחברות</Typography>
-
     </Paper>
   );
 };
