@@ -1,27 +1,7 @@
 import React from "react";
 import { useQuery } from "react-query";
-
-type User = {
-  id: string;
-  fullName: string;
-  // Define other user properties here
-};
-
-const getUsers = async (): Promise<User[]> => {
-  const response = await fetch("http://localhost:5001/api/users");
-  if (!response.ok) {
-    throw new Error("Failed to fetch users");
-  }
-  return response.json();
-};
-
-const getUserById = async (userId: string): Promise<User> => {
-  const response = await fetch(`http://localhost:5001/api/users/${userId}`);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch user ${userId}`);
-  }
-  return response.json();
-};
+import { User } from "../../utils/types/types";
+import { getUserById, getUsers } from "../../utils/api/usersApi";
 
 export default function ManageUsers() {
   const {
