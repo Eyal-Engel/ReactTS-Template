@@ -59,7 +59,7 @@ const getAllCommands = async (
     // Combine the results
     const commands = [...trueCommands, ...falseCommands];
 
-    res.json(commands);
+    res.status(200).json(commands);
   } catch (err) {
     return next(err);
   }
@@ -90,7 +90,7 @@ const getCommandById = async (
         errors: [{ message: `Command with ID ${commandId} not found.` }],
       });
     }
-    res.json(command);
+    res.status(200).json(command);
   } catch (err) {
     return next(err);
   }
@@ -159,7 +159,7 @@ const createCommand = async (
         isNewSource,
       });
 
-      res.status(201).json({ newCommand });
+      res.status(201).json(newCommand);
     } catch (err: any) {
       res.status(422).json({
         errors: [
@@ -243,7 +243,7 @@ const updateCommandById = async (
       command.commandName = commandName;
       await command.save();
 
-      res.json(command);
+      res.status(200).json(command);
     } catch (err: any) {
       res.status(422).json({
         errors: [
@@ -319,7 +319,7 @@ const deleteCommandById = async (
       }
 
       await command.destroy();
-      res.status(200).json({ message: `Command ${id} deleted successfully.` });
+      res.status(204).json({ message: `Command ${id} deleted successfully.` });
     } catch (err: any) {
       res.status(422).json({
         errors: [

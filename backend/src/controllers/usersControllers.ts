@@ -37,7 +37,7 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
       );
     }
     const users = await User.findAll({});
-    res.json(users);
+    res.status(200).json(users);
   } catch (err) {
     next(err);
   }
@@ -67,7 +67,7 @@ const getUserById = async (req: Request, res: Response, next: NextFunction) => {
         .status(404)
         .json({ errors: [{ message: `User with ID ${userId} not found.` }] });
     }
-    res.json(user);
+    res.status(200).json(user);
   } catch (err) {
     next(err);
   }

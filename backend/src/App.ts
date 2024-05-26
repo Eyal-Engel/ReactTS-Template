@@ -1,6 +1,5 @@
 import express, { Application, Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
-
 import usersRoutes from "./routes/usersRoutes";
 import commandsRoutes from "./routes/commandRoutes";
 import { handleError } from "./middlewares/errorHandler";
@@ -11,6 +10,7 @@ import db from "./dbconfig";
 dotenv.config();
 
 const app: Application = express();
+let server: any;
 
 // Middleware
 app.use(express.json());
@@ -29,11 +29,25 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
 // Start the server
 const PORT = process.env.SERVER_PORT || 5001;
-db.sync().then(async () => {
+const startServer = async () => {
+  await db.sync();
   await createAdminUser();
-  app.listen(PORT, () => {
+  server = app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
-});
+};
 
-export default app;
+// Close the server
+const closeServer = () => {
+  if (server) {
+    server.close(() => {
+      console.log("Server closed");
+    });
+  }
+};
+
+if (require.main === module) {
+  startServer();
+}
+
+export { app, startServer, closeServer };

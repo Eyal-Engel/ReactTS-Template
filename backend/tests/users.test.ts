@@ -1,7 +1,10 @@
 import request from "supertest";
-import app from "../src/App"; // Adjust the import to your app location
+import { app, closeServer, startServer } from "../src/App"; // Adjust the import to your app location
 
 describe("User Routes", () => {
+  afterAll(async () => {
+    await closeServer();
+  });
   let userId = "";
   let authToken = "";
   const newPasswordData = {
