@@ -1,5 +1,6 @@
 import request from "supertest";
 import app from "../src/App"; // Adjust the import to your app location
+import "@types/jest";
 
 describe("User Routes", () => {
   let userId = "";
