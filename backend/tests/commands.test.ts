@@ -27,6 +27,16 @@ describe("Commands Routes", () => {
     expect(response.body).toBeInstanceOf(Array);
   });
 
+  it("should get a command by ID", async () => {
+    const response = await request(app).get(
+      `/api/commands/38dd4929-d496-4df7-824d-3fa01a640ca3`
+    );
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("id");
+    expect(response.body).toHaveProperty("commandName");
+    expect(response.body).toHaveProperty("isNewSource");
+  });
+
   it("should create a new command", async () => {
     const newCommand = {
       commandName: "Test Command1",
