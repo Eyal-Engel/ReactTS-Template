@@ -1,6 +1,5 @@
 import request from "supertest";
 import app from "../src/App"; // Adjust the import to your app location
-import "@types/jest";
 
 describe("User Routes", () => {
   let userId = "";
@@ -32,6 +31,13 @@ describe("User Routes", () => {
       `/api/users/16de43f3-91ea-4659-9e4c-65e748537215`
     );
     expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("id");
+    expect(response.body).toHaveProperty("privateNumber");
+    expect(response.body).toHaveProperty("fullName");
+    expect(response.body).toHaveProperty("password");
+    expect(response.body).toHaveProperty("commandId");
+    expect(response.body).toHaveProperty("editPerm");
+    expect(response.body).toHaveProperty("managePerm");
   });
 
   it("should create a new user", async () => {
@@ -49,6 +55,12 @@ describe("User Routes", () => {
       .send(userData);
     expect(response.status).toBe(201);
     expect(response.body).toHaveProperty("id");
+    expect(response.body).toHaveProperty("privateNumber");
+    expect(response.body).toHaveProperty("fullName");
+    expect(response.body).toHaveProperty("password");
+    expect(response.body).toHaveProperty("commandId");
+    expect(response.body).toHaveProperty("editPerm");
+    expect(response.body).toHaveProperty("managePerm");
     userId = response.body.id;
   });
 
@@ -62,6 +74,13 @@ describe("User Routes", () => {
       .send(updatedUserData);
 
     expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("id");
+    expect(response.body).toHaveProperty("privateNumber");
+    expect(response.body).toHaveProperty("fullName");
+    expect(response.body).toHaveProperty("password");
+    expect(response.body).toHaveProperty("commandId");
+    expect(response.body).toHaveProperty("editPerm");
+    expect(response.body).toHaveProperty("managePerm");
   });
 
   it("should change a user's password", async () => {
@@ -71,6 +90,13 @@ describe("User Routes", () => {
       .send(newPasswordData);
 
     expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("id");
+    expect(response.body).toHaveProperty("privateNumber");
+    expect(response.body).toHaveProperty("fullName");
+    expect(response.body).toHaveProperty("password");
+    expect(response.body).toHaveProperty("commandId");
+    expect(response.body).toHaveProperty("editPerm");
+    expect(response.body).toHaveProperty("managePerm");
   });
 
   it("should login the user", async () => {

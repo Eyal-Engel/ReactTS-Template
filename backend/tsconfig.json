@@ -3,12 +3,13 @@
     "target": "ES6",
     "module": "commonjs",
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "./", // Change this to the root of your project
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "types": ["@types/jest"]
   },
-  "include": ["src/**/*", "tests"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": ["src/**/*", "tests/**/*"], // Ensure both src and tests are included
+  "exclude": ["node_modules", "dist"]
 }

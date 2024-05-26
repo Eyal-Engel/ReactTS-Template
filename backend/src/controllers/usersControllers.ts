@@ -308,9 +308,7 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
 
       await user.save();
 
-      res
-        .status(200)
-        .json({ message: `User ${userId} updated successfully.`, user });
+      res.status(200).json(user);
     } catch (err: any) {
       res.status(422).json({
         errors: [
@@ -391,10 +389,7 @@ const changePassword = async (
       user.password = hashedPassword;
       await user.save();
 
-      res.status(200).json({
-        message: `User ${userId} password updated successfully.`,
-        user,
-      });
+      res.status(200).json(user);
     } catch (err: any) {
       res.status(422).json({
         errors: [
