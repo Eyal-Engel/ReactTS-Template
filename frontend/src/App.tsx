@@ -6,7 +6,9 @@ import {
 import RootLayout from "./pages/RootLayout/RootLayout";
 import ErrorNotFoundPage from "./pages/ErrorNotFoundPage/ErrorNotFoundPage";
 import ManegeUsers from "./pages/ManageUsers/ManegeUsers";
+import { QueryClient, QueryClientProvider } from "react-query";
 
+const queryClient = new QueryClient();
 export default function App() {
   const handleRouter = (token: boolean, managePerm: boolean) => {
     let router;
@@ -76,5 +78,9 @@ export default function App() {
     return router;
   };
 
-  return <RouterProvider router={handleRouter(true, true)} />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={handleRouter(true, true)} />
+    </QueryClientProvider>
+  );
 }

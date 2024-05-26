@@ -29,9 +29,12 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res
-        .status(422)
-        .json({ errors: [{ message: "Failed to delete user, try later." }] });
+      return (
+        res
+          .status(422)
+          // .json({ errors: [{ message: "Failed to delete user, try later." }] });
+          .json(errors)
+      );
     }
     const users = await User.findAll({});
     res.json(users);
@@ -49,9 +52,12 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
 const getUserById = async (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({ errors: [{ message: "Failed to delete user, try later." }] });
+    return (
+      res
+        .status(422)
+        // .json({ errors: [{ message: "Failed to delete user, try later." }] });
+        .json(errors)
+    );
   }
   const userId = req.params.userId;
   try {

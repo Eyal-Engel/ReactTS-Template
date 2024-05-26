@@ -1,6 +1,7 @@
 import { Model, DataTypes } from "sequelize";
-import db from "../../dbConfig";
+
 import Command from "./Command"; // Import the Command model
+import db from "../../dbconfig";
 
 class User extends Model {
   public id!: string;

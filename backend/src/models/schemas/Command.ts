@@ -1,5 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-import db from "../../dbConfig";
+import db from "../../dbconfig";
 
 class Command extends Model {
   public id!: string;
