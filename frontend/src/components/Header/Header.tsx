@@ -6,7 +6,7 @@ function Header() {
   return (
     <Box
       sx={{
-        width: "100vw",
+        width: "inherit",
         display: "flex",
         alignItems: "flex-start",
         justifyContent: "space-between",
