@@ -24,6 +24,7 @@ import { createCommand, getCommands } from "../../utils/api/commandsApi";
 import CustomNoRowsOverlay from "../../components/TableUtils/CustomNoRowsOverlay";
 import { useTheme } from "@emotion/react";
 import CostumErrorOverlay from "../../components/TableUtils/CostumErrorOverlay";
+import CustomToolBarManageUsers from "../../components/TableUtils/costumToolBars/CustomToolBarManageUsers";
 
 export default function ManageUsers() {
   const { user: loggedUser } = useAuth();
@@ -217,7 +218,7 @@ export default function ManageUsers() {
   console.log(usersQuery);
   return (
     <Box className="manager_users_page">
-      <LoadingButton
+      {/* <LoadingButton
         variant="contained"
         color="primary"
         loading={newUserMutation.isLoading}
@@ -237,7 +238,7 @@ export default function ManageUsers() {
         }
       >
         create command
-      </LoadingButton>
+      </LoadingButton> */}
       <Box
         className="manage-users-container"
         sx={{
@@ -256,15 +257,16 @@ export default function ManageUsers() {
             pagination: { paginationModel: { pageSize: 10 } },
           }}
           slots={{
+            toolbar: CustomToolBarManageUsers,
             noRowsOverlay: usersQuery.isError
               ? CostumErrorOverlay
               : CustomNoRowsOverlay,
           }}
           slotProps={{
             toolbar: {
-              sortedRows,
+              rows: sortedRows,
               columns,
-              commands: commandsQuery.data,
+              commands: commandsQuery.data || [],
             },
           }}
           sx={{
