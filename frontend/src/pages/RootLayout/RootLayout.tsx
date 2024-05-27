@@ -40,12 +40,18 @@ const RootLayout = () => {
         >
           <Header />
           <Box
-            sx={{ width: "inherit", display: "flex", justifyContent: "center" }}
+            sx={{
+              width: "inherit",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "flex-start",
+            }}
           >
             <Outlet />
           </Box>
           <Box
             sx={{
+              width: "inherit",
               alignSelf: "flex-end",
               display: "flex",
               flexDirection: "column",
