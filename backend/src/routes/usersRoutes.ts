@@ -9,10 +9,10 @@ router.get("/", usersController.getUsers);
 router.get("/:userId", usersController.getUserById);
 
 router.post("/login", usersController.login);
-
+router.post("/signup", usersController.signup);
 router.use(checkAuth);
 
-router.post("/signup", usersController.signup);
+
 
 router.patch("/:userId", usersController.updateUser);
 

@@ -31,7 +31,7 @@ describe("User Routes", () => {
 
   it("should get a user by ID", async () => {
     const response = await request(app).get(
-      `/api/users/16de43f3-91ea-4659-9e4c-65e748537215`
+      `/api/users/85bdabba-2e51-4406-a1e6-70f142b27d15`
     );
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("id");

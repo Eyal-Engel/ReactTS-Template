@@ -36,6 +36,7 @@ describe("Commands Routes", () => {
     expect(response.body).toHaveProperty("commandName");
     expect(response.body).toHaveProperty("isNewSource");
   });
+  
 
   it("should create a new command", async () => {
     const newCommand = {
