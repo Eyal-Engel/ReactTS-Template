@@ -9,62 +9,62 @@ import Box from "@mui/material/Box";
 import Swal from "sweetalert2";
 import { useState, useEffect } from "react";
 import { useAuth } from "../../utils/hooks/useAuth";
-import { User } from "../../utils/types/types";
+import { Command, User } from "../../utils/types/types";
 import { heIL } from "@mui/x-data-grid";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import LockIcon from "@mui/icons-material/Lock";
-
 import "./ManegeUsers.css";
+import { useMutation, useQuery, useQueryClient } from "react-query";
+import { createUser, getUserById, getUsers } from "../../utils/api/usersApi";
+import { Button } from "@mui/material";
+import LoadingButton from "@mui/lab/LoadingButton";
+import { AxiosError } from "axios";
+import { createCommand, getCommands } from "../../utils/api/commandsApi";
 
-export default function ManageExistsUsers() {
-  const [rows, setRows] = useState<User[]>([]);
+export default function ManageUsers() {
   const { user: loggedUser } = useAuth();
-  const commands = [
-    {
-      id: "4cfd0d4c-5b0d-469a-a5a1-561d9d1a76de",
-      commandName: "מרכז",
-      isNewSource: false,
-    },
-    {
-      id: "38dd4929-d496-4df7-824d-3fa01a640ca3",
-      commandName: "ניהול",
-      isNewSource: false,
-    },
-    {
-      id: "f80a10ed-a0d3-40a3-9f06-2bbc14990a07",
-      commandName: "צפון",
-      isNewSource: false,
-    },
-  ];
+  const queryClient = useQueryClient();
+  const usersQuery = useQuery<User[]>(["users"], getUsers);
+  const commandsQuery = useQuery<Command[]>(["commands"], getCommands);
 
-  useEffect(() => {
-    const fetchDataUsers = async () => {
-      try {
-        // Fetch users from the API
-        const response = await fetch("http://localhost:5001/api/users");
-        if (!response.ok) {
-          throw new Error("Failed to fetch users");
-        }
+  // Define userId or fetch it from somewhere
+  // const userId = "85bdabba-2e51-4406-a1e6-70f142b27d15"; // Example userId
 
-        const usersData = await response.json();
-        console.log(usersData);
-        // Update the state with the fetched users
-        setRows(usersData);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
+  // const userByIdQuery = useQuery<User>(
+  //   ["user", userId], // userId should be defined
+  //   () => getUserById(userId)
+  // );
 
-    fetchDataUsers();
-  }, []);
+  const newUserMutation = useMutation({
+    mutationFn: createUser,
+    onSuccess: () => queryClient.invalidateQueries(["users"]),
+    onError: (error: AxiosError, variables: User) => {
+      console.log(
+        "an error occurred: " +
+          error.message +
+          " with user: " +
+          variables.fullName
+      );
+    },
+  });
+
+  const newCommandMutation = useMutation({
+    mutationFn: createCommand,
+    onSuccess: () => queryClient.invalidateQueries(["commands"]),
+    onError: (error: AxiosError, command: Command) => {
+      console.log(
+        "an error occurred: " + error.message + " with user: " + command.name
+      );
+    },
+  });
 
   const handleDeleteClick = (id: string) => async () => {
     try {
       if (!loggedUser) return;
 
       if (id !== loggedUser.id) {
-        const userToDelete = rows.find((row) => row.id === id);
+        const userToDelete = usersQuery.data?.find((row) => row.id === id);
 
         if (!userToDelete) return;
 
@@ -208,12 +208,53 @@ export default function ManageExistsUsers() {
   ];
 
   // Sorting rows
-  const sortedRows = [...rows].sort((a: User, b: User) => {
+  const sortedRows = [...(usersQuery.data || [])].sort((a: User, b: User) => {
     return a.privateNumber.localeCompare(b.privateNumber);
   });
 
+  const newUser: User = {
+    fullName: "guy",
+    privateNumber: "2222222",
+    password: "123",
+    commandId: "38dd4929-d496-4df7-824d-3fa01a640ca3",
+    editPerm: true,
+    managePerm: true,
+  };
+
+  //|| userByIdQuery.isLoading
+  if (usersQuery.isFetching || commandsQuery.isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  //|| userByIdQuery.isError
+  if (usersQuery.isError || commandsQuery.isError) {
+    return <div>Error fetching data</div>;
+  }
+
+  console.log(commandsQuery.data);
   return (
     <Box className="manage-users-container">
+      <LoadingButton
+        variant="contained"
+        color="primary"
+        loading={newUserMutation.isLoading}
+        onClick={() => newUserMutation.mutate(newUser)}
+      >
+        create user
+      </LoadingButton>
+      <LoadingButton
+        variant="contained"
+        color="primary"
+        loading={newCommandMutation.isLoading}
+        onClick={() =>
+          newCommandMutation.mutate({
+            name: "trololol",
+            isNewSource: true,
+          })
+        }
+      >
+        create command
+      </LoadingButton>
       <DataGrid
         rows={sortedRows}
         columns={columns}
