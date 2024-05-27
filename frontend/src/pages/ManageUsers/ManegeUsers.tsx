@@ -17,24 +17,19 @@ import LockIcon from "@mui/icons-material/Lock";
 import "./ManegeUsers.css";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { createUser, getUserById, getUsers } from "../../utils/api/usersApi";
-import { Button } from "@mui/material";
+import { Button, Theme } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { AxiosError } from "axios";
 import { createCommand, getCommands } from "../../utils/api/commandsApi";
+import CustomNoRowsOverlay from "../../components/TableUtils/CustomNoRowsOverlay";
+import { useTheme } from "@emotion/react";
 
 export default function ManageUsers() {
   const { user: loggedUser } = useAuth();
   const queryClient = useQueryClient();
-  const usersQuery = useQuery<User[]>(["users"], getUsers);
+  const usersQuery = useQuery<User[]>(["users"], getUsers, { retry: 1 });
   const commandsQuery = useQuery<Command[]>(["commands"], getCommands);
-
-  // Define userId or fetch it from somewhere
-  // const userId = "85bdabba-2e51-4406-a1e6-70f142b27d15"; // Example userId
-
-  // const userByIdQuery = useQuery<User>(
-  //   ["user", userId], // userId should be defined
-  //   () => getUserById(userId)
-  // );
+  const theme = useTheme();
 
   const newUserMutation = useMutation({
     mutationFn: createUser,
@@ -217,19 +212,10 @@ export default function ManageUsers() {
     managePerm: true,
   };
 
-  //|| userByIdQuery.isLoading
-  if (usersQuery.isFetching || commandsQuery.isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  //|| userByIdQuery.isError
-  if (usersQuery.isError || commandsQuery.isError) {
-    return <div>Error fetching data</div>;
-  }
-
   console.log(commandsQuery.data);
+  console.log(usersQuery);
   return (
-    <Box className="manage-users-container">
+    <Box className="manager_users_page">
       <LoadingButton
         variant="contained"
         color="primary"
@@ -251,13 +237,44 @@ export default function ManageUsers() {
       >
         create command
       </LoadingButton>
-      <DataGrid
-        rows={sortedRows}
-        columns={columns}
-        editMode="row"
-        localeText={heIL.components.MuiDataGrid.defaultProps.localeText}
-        pageSizeOptions={[5, 10, 25, 100]}
-      />
+      <Box
+        className="manage-users-container"
+        sx={{
+          background: "background.default",
+          borderRadius: "2rem",
+          boxShadow: "5px 5px 31px 5px rgba(0, 0, 0, 0.75)",
+        }}
+      >
+        <DataGrid
+          rows={sortedRows}
+          columns={columns}
+          loading={!usersQuery.isError && usersQuery.isLoading}
+          localeText={heIL.components.MuiDataGrid.defaultProps.localeText}
+          pageSizeOptions={[5, 10, 25, 100]}
+          initialState={{
+            pagination: { paginationModel: { pageSize: 10 } },
+          }}
+          slots={{
+            noRowsOverlay: usersQuery.isError
+              ? CustomNoRowsOverlay
+              : CustomNoRowsOverlay,
+          }}
+          slotProps={{
+            toolbar: {
+              sortedRows,
+              columns,
+              commands: commandsQuery.data,
+            },
+          }}
+          sx={{
+            border: "none",
+            "& .MuiButton-textSizeSmall": {},
+            "& .MuiDataGrid-columnHeadersInner": {
+              bgcolor: (theme as Theme).palette.primary.main,
+            },
+          }}
+        />
+      </Box>
     </Box>
   );
 }

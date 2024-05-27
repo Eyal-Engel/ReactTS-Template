@@ -12,8 +12,8 @@ const useThemeCustomize = () => {
     return {
       mode: darkMode ? "dark" : "light",
       // primary: {
-      //   main: darkMode ? '#002884' : "#757ce8",
-      //   contrastText: '#fff',
+      //   main: darkMode ? "#002884" : "#757ce8",
+      //   contrastText: "#fff",
       // },
       // secondary: {
       //   main: darkMode ? '#ba000d' : "#ff7961",

@@ -39,7 +39,9 @@ const RootLayout = () => {
           }}
         >
           <Header />
-          <Box>
+          <Box
+            sx={{ width: "inherit", display: "flex", justifyContent: "center" }}
+          >
             <Outlet />
           </Box>
           <Box
