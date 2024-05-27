@@ -19,11 +19,11 @@ const cacheRtl = createCache({
 });
 
 const RootLayout = () => {
-  const { darkTheme, toggleDarkTheme, darkMode } = useThemeCustomize();
+  const { theme, toggleTheme, darkMode } = useThemeCustomize();
 
   return (
     <CacheProvider value={cacheRtl}>
-      <ThemeProvider theme={darkTheme}>
+      <ThemeProvider theme={theme}>
         <CssBaseline />
         <Box
           sx={{
@@ -50,7 +50,7 @@ const RootLayout = () => {
               alignItems: "flex-end",
             }}
           >
-            <SwitchMode darkMode={darkMode} toggleDarkTheme={toggleDarkTheme} />
+            <SwitchMode darkMode={darkMode} toggleTheme={toggleTheme} />
             <Typography variant="body1">
               פותח ע”י בית התוכנה - חיל הלוגיסטיקה
             </Typography>

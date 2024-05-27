@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Navigate,
   RouterProvider,
@@ -7,80 +8,73 @@ import RootLayout from "./pages/RootLayout/RootLayout";
 import ErrorNotFoundPage from "./pages/ErrorNotFoundPage/ErrorNotFoundPage";
 import ManegeUsers from "./pages/ManageUsers/ManegeUsers";
 import { QueryClient, QueryClientProvider } from "react-query";
+import { AuthContext } from "./utils/contexts/authContext";
+import { useAuth } from "./utils/hooks/useAuth";
 
 const queryClient = new QueryClient();
-export default function App() {
-  const handleRouter = (token: boolean, managePerm: boolean) => {
-    let router;
+
+const handleRouter = (token: string | null, managePerm: boolean) => {
+  let router;
+
+  router = createBrowserRouter([
+    {
+      path: "/",
+      element: <RootLayout />,
+      children: [
+        { path: "/", element: <Navigate to="/login" replace /> },
+        { path: "/users", element: <ManegeUsers /> },
+        { path: "*", element: <ErrorNotFoundPage /> },
+      ],
+    },
+  ]);
+
+  if (token && managePerm) {
     router = createBrowserRouter([
       {
         path: "/",
         element: <RootLayout />,
         children: [
-          { path: "/", element: <Navigate to="/login" replace /> },
-          // { path: "/login", element: <LoginPage /> },
-          // { path: "about", element: <AboutPage /> },
+          { path: "/", element: <Navigate to="/halalim" replace /> },
           { path: "/users", element: <ManegeUsers /> },
-
           { path: "*", element: <ErrorNotFoundPage /> },
         ],
       },
     ]);
-    if (token && managePerm) {
-      router = createBrowserRouter([
-        {
-          path: "/",
-          element: <RootLayout />,
-          children: [
-            { path: "/", element: <Navigate to="/halalim" replace /> },
-            { path: "/users", element: <ManegeUsers /> },
-            // { path: "about", element: <AboutPage /> },
-            // {
-            //   path: "/halalim",
-            //   element: <HalalimPage />,
-            // },
-            // { path: "/manageUsers", element: <ManageUsersPage /> },
-            // { path: "/manageGraveyards", element: <ManageGraveyardsPage /> },
-            // { path: "/manageCommands", element: <ManageCommandsPage /> },
-            // { path: "/manageColumns", element: <ManageColumnsPage /> },
-            // {
-            //   path: "/manageSoldierAccompanied",
-            //   element: <ManageSoldierAccompaniedPage />,
-            // },
-            // { path: "/manageLeftOvers", element: <ManageLeftOversPage /> },
-            { path: "*", element: <ErrorNotFoundPage /> },
-          ],
-        },
-      ]);
-    } else if (token) {
-      router = createBrowserRouter([
-        {
-          path: "/",
-          element: <RootLayout />,
-          children: [
-            { path: "/", element: <Navigate to="/halalim" replace /> },
-            { path: "/login", element: <Navigate to="/halalim" replace /> },
-            // { path: "about", element: <AboutPage /> },
-            // {
-            //   path: "/halalim",
-            //   element: <HalalimPage />,
-            // },
-            // {
-            //   path: "/manageSoldierAccompanied",
-            //   element: <ManageSoldierAccompaniedPage />,
-            // },
-            // { path: "/manageLeftOvers", element: <ManageLeftOversPage /> },
-            { path: "*", element: <ErrorNotFoundPage /> },
-          ],
-        },
-      ]);
-    }
-    return router;
-  };
+  } else if (token) {
+    router = createBrowserRouter([
+      {
+        path: "/",
+        element: <RootLayout />,
+        children: [
+          { path: "/", element: <Navigate to="/halalim" replace /> },
+          { path: "/login", element: <Navigate to="/halalim" replace /> },
+          { path: "*", element: <ErrorNotFoundPage /> },
+        ],
+      },
+    ]);
+  }
+
+  return router;
+};
+
+const App: React.FC = () => {
+  const { token, login, logout, user } = useAuth(); // Changed userId to user
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={handleRouter(true, true)} />
-    </QueryClientProvider>
+    <AuthContext.Provider
+      value={{
+        isLoggedIn: !!token,
+        user: user,
+        token: token,
+        login: login,
+        logout: logout,
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={handleRouter(token, !!user?.managePerm)} />
+      </QueryClientProvider>
+    </AuthContext.Provider>
   );
-}
+};
+
+export default App;

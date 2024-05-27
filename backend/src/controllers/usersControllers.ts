@@ -29,12 +29,7 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return (
-        res
-          .status(422)
-          // .json({ errors: [{ message: "Failed to delete user, try later." }] });
-          .json(errors)
-      );
+      return res.status(422).json(errors);
     }
     const users = await User.findAll({});
     res.status(200).json(users);

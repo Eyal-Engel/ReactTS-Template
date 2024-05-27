@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 const useThemeCustomize = () => {
   const [darkMode, setDarkMode] = useState(true);
 
-  const toggleDarkTheme = () => {
+  const toggleTheme = () => {
     setDarkMode(!darkMode);
   };
 
@@ -19,16 +19,20 @@ const useThemeCustomize = () => {
       //   main: darkMode ? '#ba000d' : "#ff7961",
       //   contrastText: '#000',
       // },
+      background: {
+        default: darkMode ? "rgb(33,33,33)" : "#ffffff",
+        paper: darkMode ? "rgb(48,48,48)" : "#ffffff",
+      },
     };
   };
 
-  const darkTheme = useMemo(
+  const theme = useMemo(
     () =>
       createTheme({ direction: "rtl", palette: getThemeCustomized(darkMode) }),
     [darkMode]
   );
 
-  return { darkTheme, toggleDarkTheme, darkMode };
+  return { theme, toggleTheme, darkMode };
 };
 
 export default useThemeCustomize;
