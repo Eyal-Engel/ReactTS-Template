@@ -3,7 +3,7 @@ import db from "../../dbconfig";
 
 class Command extends Model {
   public id!: string;
-  public commandName!: string;
+  public name!: string;
   public isNewSource!: boolean;
 }
 
@@ -16,7 +16,7 @@ Command.init(
       primaryKey: true,
       unique: true,
     },
-    commandName: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,

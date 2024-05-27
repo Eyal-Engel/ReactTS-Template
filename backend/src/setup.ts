@@ -12,7 +12,7 @@ export const createAdminUser = async () => {
 
     // Create the command
     const command = await Command.create({
-      commandName: "ניהול",
+      name: "ניהול",
       isNewSource: false,
     });
 

@@ -96,37 +96,37 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
     req.body;
 
   try {
-    // const authHeader = req.headers.authorization;
-    // if (!authHeader) {
-    //   return res
-    //     .status(401)
-    //     .json({ errors: [{ message: "Authorization header is missing." }] });
-    // }
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res
+        .status(401)
+        .json({ errors: [{ message: "Authorization header is missing." }] });
+    }
 
-    // const token = authHeader.split(" ")[1];
-    // if (!token) {
-    //   return res
-    //     .status(401)
-    //     .json({ errors: [{ message: "Token is missing." }] });
-    // }
+    const token = authHeader.split(" ")[1];
+    if (!token) {
+      return res
+        .status(401)
+        .json({ errors: [{ message: "Token is missing." }] });
+    }
 
-    // try {
-    //   const decodedToken = jwt.verify(token, secretKey) as any;
-    //   const userUpdatingUserId = decodedToken.userId;
+    try {
+      const decodedToken = jwt.verify(token, secretKey) as any;
+      const userUpdatingUserId = decodedToken.userId;
 
-    //   const userRequested = await User.findByPk(userUpdatingUserId);
-    //   if (!userRequested || !userRequested.managePerm) {
-    //     return res
-    //       .status(403)
-    //       .json({ errors: [{ message: "User is not authorized" }] });
-    //   }
+      const userRequested = await User.findByPk(userUpdatingUserId);
+      if (!userRequested || !userRequested.managePerm) {
+        return res
+          .status(403)
+          .json({ errors: [{ message: "User is not authorized" }] });
+      }
 
-    //   const existingUser = await User.findOne({ where: { privateNumber } });
-    //   if (existingUser) {
-    //     return res.status(422).json({
-    //       errors: [{ message: "User exists already, please login instead." }],
-    //     });
-    //   }
+      const existingUser = await User.findOne({ where: { privateNumber } });
+      if (existingUser) {
+        return res.status(422).json({
+          errors: [{ message: "User exists already, please login instead." }],
+        });
+      }
 
       const hashedPassword = createHash("sha256")
         .update(password)
@@ -167,10 +167,10 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
 
       next(err);
     }
-  // } catch (err: any) {
-  //   // explicitly define type of err as Error
-  //   next(err);
-  // }
+  } catch (err: any) {
+    // explicitly define type of err as Error
+    next(err);
+  }
 };
 
 // ************************************************************************************

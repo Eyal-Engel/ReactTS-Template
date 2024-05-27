@@ -42,7 +42,7 @@ const getAllCommands = async (
         isNewSource: true,
       },
       order: [
-        ["commandName", "ASC"], // Sort by commandName in ascending order
+        ["name", "ASC"], // Sort by name in ascending order
       ],
     });
 
@@ -52,7 +52,7 @@ const getAllCommands = async (
         isNewSource: false,
       },
       order: [
-        ["commandName", "ASC"], // Sort by commandName in ascending order
+        ["name", "ASC"], // Sort by name in ascending order
       ],
     });
 
@@ -102,7 +102,7 @@ const getCommandById = async (
 // METHOD: POST
 // BODY:
 // {
-//     "commandName": "command name",
+//     "name": "command name",
 //     "isNewSource": true/false
 // }
 // HEADERS:
@@ -119,7 +119,7 @@ const createCommand = async (
       errors: [{ message: "Invalid inputs passed, please check your data." }],
     });
   }
-  const { commandName, isNewSource } = req.body;
+  const { name, isNewSource } = req.body;
   const id = uuidv4();
 
   try {
@@ -148,14 +148,11 @@ const createCommand = async (
           .json({ errors: [{ message: "User is not authorized" }] });
       }
 
-      const trimmedName = commandName
-        .trim()
-        .replace(/'/g, "׳")
-        .replace(/"/g, "״");
+      const trimmedName = name.trim().replace(/'/g, "׳").replace(/"/g, "״");
 
       const newCommand = await Command.create({
         id,
-        commandName: trimmedName,
+        name: trimmedName,
         isNewSource,
       });
 
@@ -186,7 +183,7 @@ const createCommand = async (
 // METHOD: PATCH
 // BODY:
 // {
-//     "commandName": "command name"
+//     "name": "command name"
 // }
 // HEADERS:
 // Authorization: Bearer {TOKEN}
@@ -202,7 +199,7 @@ const updateCommandById = async (
       .status(422)
       .json({ errors: [{ message: "Failed to delete user, try later." }] });
   }
-  const { commandName } = req.body;
+  const { name } = req.body;
   const id = req.params.commandId;
 
   try {
@@ -240,7 +237,7 @@ const updateCommandById = async (
         );
       }
 
-      command.commandName = commandName;
+      command.name = name;
       await command.save();
 
       res.status(200).json(command);
