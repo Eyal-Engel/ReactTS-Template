@@ -124,7 +124,6 @@ export default function ManageUsers() {
       editable: true,
       flex: 1,
     },
-
     {
       field: "fullName",
       headerName: "שם מלא",
@@ -134,19 +133,16 @@ export default function ManageUsers() {
       flex: 1,
       align: "center",
     },
-
     {
-      field: "commandName",
+      field: "command",
       headerName: "פיקוד",
       headerAlign: "center",
-      type: "singleSelect",
       align: "center",
       editable: true,
       flex: 1,
-      // valueOptions: commands,
-      // valueFormatter: ({ value }) => {
-      //   const option = commands.find(({ commandName }) => commandName === value);
-      //   return option ? option.commandName : value;
+      valueFormatter: ({ value }) => {
+        return value.name;
+      },
     },
 
     {
@@ -216,7 +212,7 @@ export default function ManageUsers() {
     fullName: "guy",
     privateNumber: "2222222",
     password: "123",
-    commandId: "38dd4929-d496-4df7-824d-3fa01a640ca3",
+    commandId: "736ac3b2-87d5-4f42-9619-17867915f619",
     editPerm: true,
     managePerm: true,
   };

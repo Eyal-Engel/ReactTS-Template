@@ -1,6 +1,4 @@
 import { Model, DataTypes } from "sequelize";
-
-import Command from "./Command"; // Import the Command model
 import db from "../../dbconfig";
 
 class User extends Model {
@@ -11,6 +9,7 @@ class User extends Model {
   public commandId!: string;
   public editPerm!: boolean;
   public managePerm!: boolean;
+  public readonly commandName!: string; // Virtual field to represent the command name
 }
 
 User.init(
@@ -39,7 +38,7 @@ User.init(
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: Command,
+        model: "commands",
         key: "id",
       },
     },

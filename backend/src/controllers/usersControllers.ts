@@ -31,12 +31,24 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
     if (!errors.isEmpty()) {
       return res.status(422).json(errors);
     }
-    const users = await User.findAll({});
+
+    const users = await User.findAll({
+      include: [
+        {
+          model: Command,
+          as: "command",
+          attributes: undefined,
+        },
+      ],
+    });
+
     res.status(200).json(users);
   } catch (err) {
     next(err);
   }
 };
+
+export default getUsers;
 
 // ************************************************************************************
 // Functionality: Get a user by ID.

@@ -6,6 +6,7 @@ import { handleError } from "./middlewares/errorHandler";
 import { createAdminUser } from "./setup";
 import cors from "cors";
 import db from "./dbconfig";
+import defineAssociations from "./models/relations"; // Import the function to define associations
 
 dotenv.config();
 
@@ -30,11 +31,26 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 // Start the server
 const PORT = process.env.SERVER_PORT || 5001;
 const startServer = async () => {
-  await db.sync();
-  await createAdminUser();
-  server = app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
+  try {
+    await db.authenticate();
+    console.log("Connection has been established successfully.");
+
+    // Call the function to define associations
+    defineAssociations();
+
+    // Sync all models
+    await db.sync();
+
+    // Create admin user
+    await createAdminUser();
+
+    // Start the server
+    server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error("Unable to connect to the database:", error);
+  }
 };
 
 // Close the server
