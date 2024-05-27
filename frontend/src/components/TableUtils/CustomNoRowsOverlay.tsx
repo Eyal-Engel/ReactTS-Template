@@ -1,7 +1,5 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
-import { DataGrid } from "@mui/x-data-grid";
-import { useDemoData } from "@mui/x-data-grid-generator";
 import { styled } from "@mui/material/styles";
 
 const StyledGridOverlay = styled("div")(({ theme }) => ({
@@ -70,7 +68,7 @@ export default function CustomNoRowsOverlay() {
           </g>
         </g>
       </svg>
-      <Box sx={{ mt: 1 }}>No Rows</Box>
+      <Box sx={{ mt: 1 }}>אין שורות</Box>
     </StyledGridOverlay>
   );
 }

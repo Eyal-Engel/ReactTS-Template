@@ -23,6 +23,7 @@ import { AxiosError } from "axios";
 import { createCommand, getCommands } from "../../utils/api/commandsApi";
 import CustomNoRowsOverlay from "../../components/TableUtils/CustomNoRowsOverlay";
 import { useTheme } from "@emotion/react";
+import CostumErrorOverlay from "../../components/TableUtils/CostumErrorOverlay";
 
 export default function ManageUsers() {
   const { user: loggedUser } = useAuth();
@@ -256,7 +257,7 @@ export default function ManageUsers() {
           }}
           slots={{
             noRowsOverlay: usersQuery.isError
-              ? CustomNoRowsOverlay
+              ? CostumErrorOverlay
               : CustomNoRowsOverlay,
           }}
           slotProps={{
