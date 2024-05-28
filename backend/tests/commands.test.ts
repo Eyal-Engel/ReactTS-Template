@@ -2,17 +2,20 @@ import { app, closeServer, startServer } from "../src/App"; // Adjust the import
 import request from "supertest";
 
 describe("Commands Routes", () => {
+  beforeAll(async () => {
+    await startServer(); // Ensure the server is started before running tests
+  });
+
   afterAll(async () => {
-    await closeServer();
+    await closeServer(); // Close the server after all tests are done
   });
 
   let authToken = "";
   let newCommandId = "";
   const loginData = {
-    privateNumber: "1234567",
+    privateNumber: "0000000",
     password: "Aa123456",
   };
-
   beforeAll(async () => {
     const response = await request(app)
       .post("/api/users/login")
@@ -29,18 +32,17 @@ describe("Commands Routes", () => {
 
   it("should get a command by ID", async () => {
     const response = await request(app).get(
-      `/api/commands/38dd4929-d496-4df7-824d-3fa01a640ca3`
+      `/api/commands/9e874ec5-101c-4ae1-9d80-23ea226c1e97`
     );
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("id");
-    expect(response.body).toHaveProperty("commandName");
+    expect(response.body).toHaveProperty("name");
     expect(response.body).toHaveProperty("isNewSource");
   });
-  
 
   it("should create a new command", async () => {
     const newCommand = {
-      commandName: "Test Command1",
+      name: "Test Command1",
       isNewSource: true,
     };
 
@@ -54,13 +56,13 @@ describe("Commands Routes", () => {
 
     expect(response.status).toBe(201);
     expect(response.body).toHaveProperty("id");
-    expect(response.body).toHaveProperty("commandName", newCommand.commandName);
+    expect(response.body).toHaveProperty("name", newCommand.name);
     newCommandId = response.body.id;
   });
 
   it("should update a command by ID", async () => {
     const updatedCommandData = {
-      commandName: "Updated Command Name",
+      name: "Updated Command Name",
     };
 
     // Ensure newCommandId is defined before using it
@@ -75,10 +77,7 @@ describe("Commands Routes", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("id", newCommandId);
-    expect(response.body).toHaveProperty(
-      "commandName",
-      updatedCommandData.commandName
-    );
+    expect(response.body).toHaveProperty("name", updatedCommandData.name);
   });
 
   it("should delete a command by ID", async () => {
