@@ -5,6 +5,7 @@ export type User = {
   privateNumber: string;
   fullName: string;
   password: string;
+  confirmPassword?: string;
   commandId: UUID;
   editPerm: boolean;
   managePerm: boolean;
