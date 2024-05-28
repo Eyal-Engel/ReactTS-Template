@@ -28,7 +28,9 @@ const RootLayout = () => {
         <Box
           sx={{
             height: "100vh",
+            maxHeight: "100vh",
             width: "100vw",
+            maxWidth: "100vw",
             display: "flex",
             flexDirection: "column",
             backgroundColor: "background.default",
@@ -42,6 +44,7 @@ const RootLayout = () => {
           <Box
             sx={{
               width: "inherit",
+              height: "80vh",
               display: "flex",
               justifyContent: "center",
               alignItems: "flex-start",
