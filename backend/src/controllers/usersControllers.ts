@@ -108,6 +108,12 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
   const { privateNumber, fullName, password, commandId, editPerm, managePerm } =
     req.body;
 
+  if (editPerm && managePerm) {
+    return res.status(422).json({
+      errors: [{ message: "editPerm and managePerm cannot both be true." }],
+    });
+  }
+
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -157,14 +163,6 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
 
       res.status(201).json(newUser);
     } catch (err: any) {
-      // explicitly define type of err as Error
-      // if (isJsonWebTokenError(err)) {
-      //   return res
-      //     .status(401)
-      //     .json({ errors: [{ message: "Invalid token." }] });
-      // }
-
-      // if (err.name === "SequelizeForeignKeyConstraintError") {
       res.status(422).json({
         errors: [
           {
@@ -176,12 +174,9 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
           },
         ],
       });
-      // }
-
       next(err);
     }
   } catch (err: any) {
-    // explicitly define type of err as Error
     next(err);
   }
 };
@@ -269,10 +264,16 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
   if (!errors.isEmpty()) {
     return res
       .status(422)
-      .json({ errors: [{ message: "Failed to delete user, try later." }] });
+      .json({ errors: [{ message: "Failed to update user, try later." }] });
   }
   const userId = req.params.userId;
   const { privateNumber, fullName, commandId, editPerm, managePerm } = req.body;
+
+  if (editPerm && managePerm) {
+    return res.status(422).json({
+      errors: [{ message: "editPerm and managePerm cannot both be true." }],
+    });
+  }
 
   try {
     const authHeader = req.headers.authorization;

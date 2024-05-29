@@ -23,7 +23,7 @@ export const createAdminUser = async () => {
       fullName: "admin user",
       password: hashedPassword,
       commandId: command.id, // Assign the command to the user
-      editPerm: true,
+      editPerm: false,
       managePerm: true,
     });
 

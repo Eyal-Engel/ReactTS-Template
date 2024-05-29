@@ -42,7 +42,7 @@ const startServer = async () => {
     await db.sync();
 
     // Create admin user
-    // await createAdminUser();
+    await createAdminUser();
 
     // Start the server
     server = app.listen(PORT, () => {
