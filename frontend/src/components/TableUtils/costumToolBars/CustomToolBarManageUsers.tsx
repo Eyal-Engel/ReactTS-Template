@@ -1,6 +1,6 @@
 import * as React from "react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useRef } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { useQuery, useQueryClient, useMutation } from "react-query";
 import { AxiosError } from "axios";
 import {
@@ -27,6 +27,8 @@ import {
   InputLabel,
   Box,
   Typography,
+  FormHelperText,
+  Autocomplete,
 } from "@mui/material";
 import { AiOutlineCloseCircle } from "react-icons/ai";
 import { IoIosClose } from "react-icons/io";
@@ -86,6 +88,7 @@ export default function CustomToolBarManageUsers({
   };
 
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors },
@@ -172,62 +175,83 @@ export default function CustomToolBarManageUsers({
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <FormControl fullWidth>
                 <TextField
-                  label="מספר אישי"
+                  label="מספר אישי *"
                   id="privateNumber"
                   size="medium"
                   {...register("privateNumber", {
-                    required: "מספר אישי שדה חובה",
+                    required: "שדה חובה",
                     pattern: {
                       value: /^\d{7}$/,
                       message: ` הכנס מספר אישי בעל 7 ספרות `,
                     },
                   })}
+                  helperText={
+                    errors.privateNumber && (
+                      <Typography variant="body2" color="error">
+                        {errors.privateNumber.message}
+                      </Typography>
+                    )
+                  }
                 />
-                {errors.privateNumber && (
-                  <Typography variant="body2" color="error">
-                    {errors.privateNumber.message}
-                  </Typography>
-                )}
               </FormControl>
               <FormControl fullWidth>
                 <TextField
-                  label="שם מלא"
+                  label="שם מלא *"
                   id="fullName"
                   size="medium"
                   {...register("fullName", {
-                    required: "שם מלא שדה חובה",
+                    required: "שדה חובה",
                   })}
+                  helperText={
+                    errors.fullName && (
+                      <Typography variant="body2" color="error">
+                        {errors.fullName.message}
+                      </Typography>
+                    )
+                  }
                 />
-                {errors.fullName && (
-                  <Typography variant="body2" color="error">
-                    {errors.fullName.message}
-                  </Typography>
-                )}
               </FormControl>
-              <FormControl fullWidth error={Boolean(errors.commandId)}>
-                <InputLabel id="commandId">פיקוד</InputLabel>
-                <Select
-                  labelId="commandId"
-                  id="commandId"
-                  label="פיקוד"
-                  {...register("commandId", { required: "פיקוד שדה חובה" })}
-                >
-                  {commands.map((command: Command, index) => (
-                    <MenuItem key={command.id} value={command.id}>
-                      {command.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.commandId && (
-                  <Typography variant="body2" color="error">
-                    {errors.commandId.message}
-                  </Typography>
-                )}
+              <FormControl fullWidth>
+                {/* <InputLabel id="commandId-label">פיקוד</InputLabel> */}
+
+                <Controller
+                  control={control}
+                  {...register("commandId", {
+                    required: "שדה חובה",
+                  })}
+                  render={({ field: { onChange, value } }) => (
+                    <Autocomplete
+                      id="commandId"
+                      options={commands}
+                      getOptionLabel={(option) => option.name}
+                      onChange={(__, newValue) => {
+                        onChange(newValue ? newValue.id : null);
+                      }}
+                      value={
+                        commands.find((command) => command.id === value) || null
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="פיקוד *"
+                          variant="outlined"
+                          helperText={
+                            errors.command && (
+                              <Typography variant="body2" color="error">
+                                {errors.command.message}
+                              </Typography>
+                            )
+                          }
+                        />
+                      )}
+                    />
+                  )}
+                />
               </FormControl>
 
               <FormControl fullWidth>
                 <TextField
-                  label="סיסמה"
+                  label="סיסמה *"
                   id="password"
                   type={showPassword ? "text" : "password"}
                   size="medium"
@@ -245,23 +269,25 @@ export default function CustomToolBarManageUsers({
                     ),
                   }}
                   {...register("password", {
-                    required: "סיסמה שדה חובה",
+                    required: "שדה חובה",
                     pattern: {
                       value: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/,
                       message:
                         "סיסמה חייבת להכיל לפחות ספרה אחת ואות אחת ולהיות באורך של לפחות 6 תווים",
                     },
                   })}
+                  helperText={
+                    errors.password && (
+                      <Typography variant="body2" color="error">
+                        {errors.password.message}
+                      </Typography>
+                    )
+                  }
                 />
-                {errors.password && (
-                  <Typography variant="body2" color="error">
-                    {errors.password.message}
-                  </Typography>
-                )}
               </FormControl>
               <FormControl fullWidth>
                 <TextField
-                  label="אימות סיסמה"
+                  label="אימות סיסמה *"
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   size="medium"
@@ -279,16 +305,18 @@ export default function CustomToolBarManageUsers({
                     ),
                   }}
                   {...register("confirmPassword", {
-                    required: "אימות סיסמה שדה חובה",
+                    required: "שדה חובה",
                     validate: (value) =>
                       value === password || "אימות הסיסמה אינו תואם את הסיסמה",
                   })}
+                  helperText={
+                    errors.confirmPassword && (
+                      <Typography variant="body2" color="error">
+                        {errors.confirmPassword.message}
+                      </Typography>
+                    )
+                  }
                 />
-                {errors.confirmPassword && (
-                  <Typography variant="body2" color="error">
-                    {errors.confirmPassword.message}
-                  </Typography>
-                )}
               </FormControl>
               <FormControl component="fieldset" fullWidth>
                 <FormLabel component="legend">הרשאות</FormLabel>
