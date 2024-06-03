@@ -1,16 +1,9 @@
+import React, { forwardRef } from "react";
 import { Paper, PaperProps } from "@mui/material";
-import React from "react";
-import Draggable from "react-draggable";
 
-const PaperComponent: React.FC<PaperProps> = (props) => {
-  return (
-    <Draggable
-      handle="#draggable-dialog-title"
-      cancel={'[class*="MuiDialogContent-root"]'}
-    >
-      <Paper {...props} sx={{ borderRadius: "10px" }} />
-    </Draggable>
-  );
-};
+// Forward ref properly and ensure types are correctly set
+const PaperComponent = forwardRef<HTMLDivElement, PaperProps>((props, ref) => {
+  return <Paper ref={ref} {...props} />;
+});
 
 export default PaperComponent;

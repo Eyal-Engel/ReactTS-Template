@@ -4,6 +4,7 @@ import {
   GridActionsCellItem,
   GridColDef,
   GridColTypeDef,
+  GridRowId,
 } from "@mui/x-data-grid";
 import Box from "@mui/material/Box";
 import Swal from "sweetalert2";
@@ -16,7 +17,12 @@ import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import LockIcon from "@mui/icons-material/Lock";
 import "./ManegeUsers.css";
 import { useMutation, useQuery, useQueryClient } from "react-query";
-import { createUser, getUserById, getUsers } from "../../utils/api/usersApi";
+import {
+  createUser,
+  deleteUser,
+  getUserById,
+  getUsers,
+} from "../../utils/api/usersApi";
 import { Button, Theme } from "@mui/material";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { AxiosError } from "axios";
@@ -25,6 +31,8 @@ import CustomNoRowsOverlay from "../../components/TableUtils/CustomNoRowsOverlay
 import { useTheme } from "@emotion/react";
 import CostumErrorOverlay from "../../components/TableUtils/CostumErrorOverlay";
 import CustomToolBarManageUsers from "../../components/TableUtils/costumToolBars/CustomToolBarManageUsers";
+import { toast } from "react-toastify";
+import { UUID } from "crypto";
 
 export default function ManageUsers() {
   const { user: loggedUser } = useAuth();
@@ -33,82 +41,31 @@ export default function ManageUsers() {
   const commandsQuery = useQuery<Command[]>(["commands"], getCommands);
   const theme = useTheme();
 
-  const newUserMutation = useMutation({
-    mutationFn: createUser,
-    onSuccess: () => queryClient.invalidateQueries(["users"]),
-    onError: (error: AxiosError, variables: User) => {
-      console.log(
-        "an error occurred: " +
-          error.message +
-          " with user: " +
-          variables.fullName
-      );
+  const deleteUserMutation = useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["users"]);
+      toast.success("משתמש נמחק בהצלחה");
+    },
+    onError: (error: AxiosError) => {
+      toast.error("לא ניתן למחוק את המשתמש");
     },
   });
 
-  const newCommandMutation = useMutation({
-    mutationFn: createCommand,
-    onSuccess: () => queryClient.invalidateQueries(["commands"]),
-    onError: (error: AxiosError, command: Command) => {
-      console.log(
-        "an error occurred: " + error.message + " with user: " + command.name
-      );
-    },
-  });
+  const handleDeleteClick = (id: GridRowId) => async () => {
+    // if (!loggedUser) return;
+    console.log(id);
+    // if (id !== loggedUser.id) {
+    const userToDelete: User | undefined = usersQuery.data?.find(
+      (user) => user.id === id
+    );
 
-  const handleDeleteClick = (id: string) => async () => {
-    try {
-      if (!loggedUser) return;
-
-      if (id !== loggedUser.id) {
-        const userToDelete = usersQuery.data?.find((row) => row.id === id);
-
-        if (!userToDelete) return;
-
-        const { fullName } = userToDelete;
-
-        const result = await Swal.fire({
-          title: `האם את/ה בטוח/ה שתרצה/י למחוק את המשתמש ${fullName}`,
-          text: "פעולה זאת איננה ניתנת לשחזור",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#d33",
-          cancelButtonColor: "#3085d6",
-          confirmButtonText: "מחק משתמש",
-          cancelButtonText: "בטל",
-          reverseButtons: true,
-          customClass: {
-            container: "swal-dialog-custom",
-          },
-        });
-
-        if (result.isConfirmed) {
-          // Delete user here
-          await Swal.fire({
-            title: `משתמש "${fullName}" נמחק בהצלחה!`,
-            icon: "success",
-            confirmButtonText: "אישור",
-            customClass: {
-              container: "swal-dialog-custom",
-            },
-          });
-        }
-      } else {
-        await Swal.fire({
-          title: `לא ניתן למחוק את המשתמש`,
-          text: "משתמש אינו יכול למחוק את עצמו",
-          icon: "error",
-          confirmButtonColor: "#3085d6",
-          confirmButtonText: "אישור",
-          reverseButtons: true,
-          customClass: {
-            container: "swal-dialog-custom",
-          },
-        });
-      }
-    } catch (error) {
-      console.log(error);
-    }
+    // if (!userToDelete) return;
+    deleteUserMutation.mutate(userToDelete?.id);
+    // }
+    // else {
+    // toast.error("ניתן למחוק את המשתמש שמחובר למערכת")
+    // }
   };
 
   const columns: GridColDef<User>[] = [
@@ -194,6 +151,7 @@ export default function ManageUsers() {
             icon={<DeleteIcon />}
             label="Delete"
             color="error"
+            onClick={handleDeleteClick(id)}
           />,
         ];
       },
@@ -214,8 +172,7 @@ export default function ManageUsers() {
     managePerm: true,
   };
 
-  console.log(commandsQuery.data);
-  console.log(usersQuery);
+  console.log(usersQuery.data);
   return (
     <Box className="manager_users_page">
       {/* <LoadingButton
