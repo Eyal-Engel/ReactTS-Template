@@ -17,3 +17,7 @@ export type Command = {
   name: string;
   isNewSource: boolean;
 };
+
+// export type ErrorResponse = {
+
+// }

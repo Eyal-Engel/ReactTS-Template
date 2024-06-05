@@ -10,6 +10,7 @@ import ManegeUsers from "./pages/ManageUsers/ManegeUsers";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { AuthContext } from "./utils/contexts/authContext";
 import { useAuth } from "./utils/hooks/useAuth";
+import { UserDialogProvider } from "./utils/contexts/userDialogContext";
 
 const queryClient = new QueryClient();
 
@@ -71,7 +72,9 @@ const App: React.FC = () => {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={handleRouter(token, !!user?.managePerm)} />
+        <UserDialogProvider>
+          <RouterProvider router={handleRouter(token, !!user?.managePerm)} />
+        </UserDialogProvider>
       </QueryClientProvider>
     </AuthContext.Provider>
   );

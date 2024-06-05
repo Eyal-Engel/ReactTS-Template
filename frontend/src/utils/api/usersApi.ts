@@ -33,14 +33,14 @@ export const createUser = async (newUser: User): Promise<User> => {
     const response = await axios.post(apiUrl, body, { headers });
     return response.data;
   } catch (error) {
-    console.error("Error creating new user:", error);
+    // console.error("Error creating new user:", error);
     throw error;
   }
 };
 
 export const deleteUser = async (
   userId: UUID | undefined
-): Promise<{ massage: string }> => {
+): Promise<{ message: string }> => {
   const apiUrl = `http://localhost:5001/api/users/${userId}`;
   const userData = localStorage.getItem("userData");
   const token = userData ? JSON.parse(userData)?.token : null;
@@ -51,6 +51,7 @@ export const deleteUser = async (
 
   try {
     const response = await axios.delete(apiUrl, { headers });
+    console.log(response.data);
     return response.data;
   } catch (error) {
     console.error("Error creating new user:", error);

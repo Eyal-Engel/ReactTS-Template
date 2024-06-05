@@ -1,14 +1,11 @@
 import {
   Autocomplete,
-  AutocompleteRenderInputParams,
   Box,
   Button,
-  Checkbox,
   Dialog,
   Divider,
   FormControl,
   FormControlLabel,
-  FormGroup,
   FormLabel,
   IconButton,
   InputAdornment,
@@ -17,30 +14,31 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Transition from "../TableUtils/costumToolBars/Transition";
 import { useForm, Controller } from "react-hook-form";
 import { Command, User } from "../../utils/types/types";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { createUser, deleteUser } from "../../utils/api/usersApi";
 import { toast } from "react-toastify";
-import { AxiosError } from "axios";
 import { IoIosClose } from "react-icons/io";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { LoadingButton } from "@mui/lab";
 import { getCommands } from "../../utils/api/commandsApi";
 import PaperComponent from "../TableUtils/costumToolBars/PaperComponent";
-import { Compare } from "@mui/icons-material";
-import { error } from "console";
+import { useUserDialog } from "../../utils/contexts/userDialogContext";
+
 type SignupFormProps = {
-  openCreateNewUser: boolean;
-  setOpenCreateNewUser: React.Dispatch<React.SetStateAction<boolean>>;
+  // openCreateNewUser: boolean;
+  // setOpenCreateNewUser: React.Dispatch<React.SetStateAction<boolean>>;
+  // userToEdit?: User;
 };
-function SignupForm({
-  openCreateNewUser,
-  setOpenCreateNewUser,
-}: SignupFormProps) {
+function SignupForm({}: // openCreateNewUser,
+// setOpenCreateNewUser,
+// userToEdit,
+SignupFormProps) {
+  const { openUserDialog, close, userToEdit } = useUserDialog();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -55,7 +53,25 @@ function SignupForm({
     watch,
     setValue,
     reset,
-  } = useForm<User>();
+  } = useForm<User>({
+    defaultValues: {
+      privateNumber: userToEdit ? userToEdit.privateNumber : "",
+      // commandId: userToEdit ? userToEdit.commandId : undefined,
+      editPerm: userToEdit ? userToEdit.editPerm : false,
+      managePerm: userToEdit ? userToEdit.managePerm : false,
+      fullName: userToEdit ? userToEdit.fullName : "",
+    },
+  });
+
+  useEffect(() => {
+    reset({
+      privateNumber: userToEdit ? userToEdit.privateNumber : "",
+      // commandId: userToEdit ? userToEdit.commandId : undefined,
+      editPerm: userToEdit ? userToEdit.editPerm : false,
+      managePerm: userToEdit ? userToEdit.managePerm : false,
+      fullName: userToEdit ? userToEdit.fullName : "",
+    });
+  }, [userToEdit, reset]);
 
   const newUserMutation = useMutation({
     mutationFn: createUser,
@@ -63,9 +79,8 @@ function SignupForm({
       queryClient.invalidateQueries(["users"]);
       toast.success("User created successfully");
       handleClose();
-      reset();
     },
-    onError: (error: AxiosError, variables: User) => {
+    onError: (error: Error, variables: User) => {
       toast.error(`לא ניתן ליצור את המשתמש`);
     },
   });
@@ -87,7 +102,8 @@ function SignupForm({
     newUserMutation.mutate(formData);
   };
   const handleClose = () => {
-    setOpenCreateNewUser(false);
+    close();
+    reset();
   };
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,9 +111,10 @@ function SignupForm({
     setValue("editPerm", value === "editPerm");
     setValue("managePerm", value === "managePerm");
   };
+  console.log(userToEdit);
   return (
     <Dialog
-      open={openCreateNewUser}
+      open={openUserDialog}
       onClose={handleClose}
       PaperComponent={PaperComponent}
       aria-labelledby="draggable-dialog-title"
@@ -123,9 +140,6 @@ function SignupForm({
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <FormControl fullWidth>
               <TextField
-                label="מספר אישי *"
-                id="privateNumber"
-                size="medium"
                 {...register("privateNumber", {
                   required: "שדה חובה",
                   pattern: {
@@ -133,6 +147,9 @@ function SignupForm({
                     message: ` הכנס מספר אישי בעל 7 ספרות `,
                   },
                 })}
+                label="מספר אישי *"
+                id="privateNumber"
+                size="medium"
               />
               {errors.privateNumber && (
                 <Typography variant="body2" color="error">
@@ -142,12 +159,12 @@ function SignupForm({
             </FormControl>
             <FormControl fullWidth>
               <TextField
-                label="שם מלא *"
-                id="fullName"
-                size="medium"
                 {...register("fullName", {
                   required: "שדה חובה",
                 })}
+                label="שם מלא *"
+                id="fullName"
+                size="medium"
               />
               {errors.fullName && (
                 <Typography variant="body2" color="error">
@@ -160,8 +177,9 @@ function SignupForm({
                 name="commandId"
                 control={control}
                 rules={{ required: "שדה חובה" }}
+                defaultValue={userToEdit ? userToEdit.commandId : undefined}
                 render={({ field }) => (
-                  <Autocomplete
+                  <Autocomplete<Command>
                     {...field}
                     value={
                       commandsQuery.data?.find(
@@ -183,78 +201,83 @@ function SignupForm({
                 </Typography>
               )}
             </FormControl>
-            <FormControl fullWidth>
-              <TextField
-                label="סיסמה *"
-                id="password"
-                type={showPassword ? "text" : "password"}
-                size="medium"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <VisibilityOffIcon />
-                        ) : (
-                          <VisibilityIcon />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                {...register("password", {
-                  required: "שדה חובה",
-                  pattern: {
-                    value: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/,
-                    message:
-                      "סיסמה חייבת להכיל לפחות ספרה אחת ואות אחת ולהיות באורך של לפחות 6 תווים",
-                  },
-                })}
-              />
-              {errors.password && (
-                <Typography variant="body2" color="error">
-                  {errors.password.message}
-                </Typography>
-              )}
-            </FormControl>
-            <FormControl fullWidth>
-              <TextField
-                label="אימות סיסמה *"
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                size="medium"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => {
-                          setShowConfirmPassword(!showConfirmPassword);
-                        }}
-                      >
-                        {showConfirmPassword ? (
-                          <VisibilityOffIcon />
-                        ) : (
-                          <VisibilityIcon />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                {...register("confirmPassword", {
-                  required: "שדה חובה",
-                  validate: (value) =>
-                    value === watch("password") ||
-                    "אימות הסיסמה אינו תואם את הסיסמה",
-                })}
-              />
-              {errors.confirmPassword && (
-                <Typography variant="body2" color="error">
-                  {errors.confirmPassword.message}
-                </Typography>
-              )}
-            </FormControl>
+
+            {!userToEdit && (
+              <FormControl fullWidth>
+                <TextField
+                  {...register("password", {
+                    required: "שדה חובה",
+                    pattern: {
+                      value: /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/,
+                      message:
+                        "סיסמה חייבת להכיל לפחות ספרה אחת ואות אחת ולהיות באורך של לפחות 6 תווים",
+                    },
+                  })}
+                  label="סיסמה *"
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  size="medium"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <VisibilityOffIcon />
+                          ) : (
+                            <VisibilityIcon />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                {errors.password && (
+                  <Typography variant="body2" color="error">
+                    {errors.password.message}
+                  </Typography>
+                )}
+              </FormControl>
+            )}
+            {!userToEdit && (
+              <FormControl fullWidth>
+                <TextField
+                  {...register("confirmPassword", {
+                    required: "שדה חובה",
+                    validate: (value) =>
+                      value === watch("password") ||
+                      "אימות הסיסמה אינו תואם את הסיסמה",
+                  })}
+                  label="אימות סיסמה *"
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  size="medium"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() => {
+                            setShowConfirmPassword(!showConfirmPassword);
+                          }}
+                        >
+                          {showConfirmPassword ? (
+                            <VisibilityOffIcon />
+                          ) : (
+                            <VisibilityIcon />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+                {errors.confirmPassword && (
+                  <Typography variant="body2" color="error">
+                    {errors.confirmPassword.message}
+                  </Typography>
+                )}
+              </FormControl>
+            )}
             <FormControl component="fieldset" fullWidth>
               <FormLabel component="legend">הרשאות</FormLabel>
               <RadioGroup row onChange={handleRadioChange}>

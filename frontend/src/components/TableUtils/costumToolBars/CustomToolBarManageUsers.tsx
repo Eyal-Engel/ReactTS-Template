@@ -11,11 +11,10 @@ import {
 import { Button } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SaveAltIcon from "@mui/icons-material/SaveAlt";
-
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Command } from "../../../utils/types/types";
 import SignupForm from "../../forms/SignupForm";
+import { useUserDialog } from "../../../utils/contexts/userDialogContext";
 
 interface CustomToolBarManageUsersProps {
   darkMode: boolean;
@@ -24,7 +23,7 @@ interface CustomToolBarManageUsersProps {
 export default function CustomToolBarManageUsers({
   darkMode,
 }: CustomToolBarManageUsersProps) {
-  const [openCreateNewUser, setOpenCreateNewUser] = useState(false);
+  const { open } = useUserDialog();
 
   return (
     <>
@@ -38,11 +37,7 @@ export default function CustomToolBarManageUsers({
         closeButton={false}
         className={darkMode ? "toastify-dark" : "toastify-light"}
       />
-      <Button
-        color="primary"
-        startIcon={<AddIcon />}
-        onClick={() => setOpenCreateNewUser(true)}
-      >
+      <Button color="primary" startIcon={<AddIcon />} onClick={open}>
         צור משתמש חדש
       </Button>
       <GridToolbarContainer
@@ -60,10 +55,6 @@ export default function CustomToolBarManageUsers({
         </div>
         <GridToolbarQuickFilter color="primary" />
       </GridToolbarContainer>
-      <SignupForm
-        openCreateNewUser={openCreateNewUser}
-        setOpenCreateNewUser={setOpenCreateNewUser}
-      />
     </>
   );
 }
