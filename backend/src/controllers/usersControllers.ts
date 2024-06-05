@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import { createHash } from "crypto";
 import User from "../models/schemas/User";
 import Command from "../models/schemas/Command";
+import redisClient from "../redisClient"; // Import redis client
 
 dotenv.config();
 
@@ -14,11 +15,6 @@ const secretKey = process.env.SECRET_KEY as jwt.Secret;
 if (!secretKey) {
   throw new Error("SECRET_KEY is not defined in the environment variables");
 }
-
-// check if error type is invalid jwt token
-const isJsonWebTokenError = (err: any): err is jwt.JsonWebTokenError => {
-  return err.name === "JsonWebTokenError";
-};
 
 // ************************************************************************************
 // Functionality: Get all users.

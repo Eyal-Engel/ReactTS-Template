@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { v4 as uuidv4 } from "uuid";
 import Command from "../models/schemas/Command";
 import User from "../models/schemas/User";
+import redisClient from "../redisClient"; // Import redis client
 
 dotenv.config();
 
@@ -13,11 +14,6 @@ const secretKey = process.env.SECRET_KEY as jwt.Secret;
 if (!secretKey) {
   throw new Error("SECRET_KEY is not defined in the environment variables");
 }
-
-// check if error type is invalid jwt token
-const isJsonWebTokenError = (err: any): err is jwt.JsonWebTokenError => {
-  return err.name === "JsonWebTokenError";
-};
 
 // ************************************************************************************
 // Functionality: Get all commands.
@@ -36,28 +32,25 @@ const getAllCommands = async (
         .status(422)
         .json({ errors: [{ message: "Failed to delete user, try later." }] });
     }
-    // Fetch commands where isNewSource is true
+
     const trueCommands = await Command.findAll({
       where: {
         isNewSource: true,
       },
-      order: [
-        ["name", "ASC"], // Sort by name in ascending order
-      ],
+      order: [["name", "ASC"]],
     });
 
-    // Fetch commands where isNewSource is false
     const falseCommands = await Command.findAll({
       where: {
         isNewSource: false,
       },
-      order: [
-        ["name", "ASC"], // Sort by name in ascending order
-      ],
+      order: [["name", "ASC"]],
     });
 
-    // Combine the results
     const commands = [...trueCommands, ...falseCommands];
+
+    // Cache the combined results
+    redisClient.setEx(req.originalUrl, 3600, JSON.stringify(commands));
 
     res.status(200).json(commands);
   } catch (err) {
@@ -90,6 +83,10 @@ const getCommandById = async (
         errors: [{ message: `Command with ID ${commandId} not found.` }],
       });
     }
+
+    // Cache the result
+    redisClient.setEx(req.originalUrl, 3600, JSON.stringify(command));
+
     res.status(200).json(command);
   } catch (err) {
     return next(err);
@@ -155,6 +152,9 @@ const createCommand = async (
         name: trimmedName,
         isNewSource,
       });
+
+      // Invalidate cache for the command list
+      redisClient.del("/api/commands");
 
       res.status(201).json(newCommand);
     } catch (err: any) {
@@ -240,6 +240,11 @@ const updateCommandById = async (
       command.name = name;
       await command.save();
 
+      // Invalidate cache for the updated command
+      redisClient.del(`/api/commands/${id}`);
+      // Invalidate cache for the command list
+      redisClient.del("/api/commands");
+
       res.status(200).json(command);
     } catch (err: any) {
       res.status(422).json({
@@ -316,6 +321,12 @@ const deleteCommandById = async (
       }
 
       await command.destroy();
+
+      // Invalidate cache for the deleted command
+      redisClient.del(`/api/commands/${id}`);
+      // Invalidate cache for the command list
+      redisClient.del("/api/commands");
+
       res.status(204).json({ message: `Command ${id} deleted successfully.` });
     } catch (err: any) {
       res.status(422).json({
