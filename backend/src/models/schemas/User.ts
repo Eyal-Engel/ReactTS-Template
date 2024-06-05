@@ -25,10 +25,17 @@ User.init(
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
+      validate: {
+        isNumeric: true,
+        len: [7, 7],
+      },
     },
     fullName: {
       type: DataTypes.STRING,
       allowNull: false,
+      validate: {
+        is: /^(?=.{2,30}$)[א-ת']+(\s[א-ת']{1,}){1,2}$/,
+      },
     },
     password: {
       type: DataTypes.STRING,

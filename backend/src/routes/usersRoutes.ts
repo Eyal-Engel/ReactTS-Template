@@ -8,9 +8,9 @@ const router = express.Router();
 router.get("/", cacheMiddleware(3600), usersController.getUsers);
 router.get("/:userId", cacheMiddleware(1800), usersController.getUserById);
 router.post("/login", usersController.login);
-router.post("/signup", usersController.signup);
 
 router.use(checkAuth);
+router.post("/signup", usersController.signup);
 
 router.patch("/:userId", usersController.updateUser);
 router.patch("/password/:userId", usersController.changePassword);

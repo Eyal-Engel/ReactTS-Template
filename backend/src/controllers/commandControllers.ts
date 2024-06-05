@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { v4 as uuidv4 } from "uuid";
@@ -26,13 +25,6 @@ const getAllCommands = async (
   next: NextFunction
 ) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res
-        .status(422)
-        .json({ errors: [{ message: "Failed to delete user, try later." }] });
-    }
-
     const trueCommands = await Command.findAll({
       where: {
         isNewSource: true,
@@ -69,12 +61,6 @@ const getCommandById = async (
   res: Response,
   next: NextFunction
 ) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({ errors: [{ message: "Failed to delete user, try later." }] });
-  }
   const commandId = req.params.commandId;
   try {
     const command = await Command.findByPk(commandId);
@@ -110,12 +96,6 @@ const createCommand = async (
   res: Response,
   next: NextFunction
 ) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(422).json({
-      errors: [{ message: "Invalid inputs passed, please check your data." }],
-    });
-  }
   const { name, isNewSource } = req.body;
   const id = uuidv4();
 
@@ -193,12 +173,6 @@ const updateCommandById = async (
   res: Response,
   next: NextFunction
 ) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({ errors: [{ message: "Failed to delete user, try later." }] });
-  }
   const { name } = req.body;
   const id = req.params.commandId;
 
@@ -278,12 +252,6 @@ const deleteCommandById = async (
   res: Response,
   next: NextFunction
 ) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({ errors: [{ message: "Failed to delete user, try later." }] });
-  }
   const id = req.params.commandId;
 
   try {

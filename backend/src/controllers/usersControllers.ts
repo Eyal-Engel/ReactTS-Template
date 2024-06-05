@@ -96,9 +96,7 @@ const getUserById = async (req: Request, res: Response, next: NextFunction) => {
 const signup = async (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({
-      errors: [{ message: "Invalid inputs passed, please check your data." }],
-    });
+    return res.status(411).json({ errors });
   }
   const id = uuidv4();
   const { privateNumber, fullName, password, commandId, editPerm, managePerm } =
@@ -110,70 +108,54 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
     });
   }
 
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res
+      .status(401)
+      .json({ errors: [{ message: "Authorization header is missing." }] });
+  }
+
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ errors: [{ message: "Token is missing." }] });
+  }
+
+  const decodedToken = jwt.verify(token, secretKey) as any;
+  const userUpdatingUserId = decodedToken.userId;
+
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
+    const userRequested = await User.findByPk(userUpdatingUserId);
+    if (!userRequested || !userRequested.managePerm) {
       return res
-        .status(401)
-        .json({ errors: [{ message: "Authorization header is missing." }] });
+        .status(403)
+        .json({ errors: [{ message: "User is not authorized" }] });
     }
+  } catch (error) {
+    next(error);
+  }
 
-    const token = authHeader.split(" ")[1];
-    if (!token) {
-      return res
-        .status(401)
-        .json({ errors: [{ message: "Token is missing." }] });
-    }
+  // const existingUser = await User.findOne({ where: { privateNumber } });
+  // if (existingUser) {
+  //   return res.status(422).json({
+  //     errors: [{ message: "User exists already, please login instead." }],
+  //   });
+  // }
 
-    try {
-      const decodedToken = jwt.verify(token, secretKey) as any;
-      const userUpdatingUserId = decodedToken.userId;
+  const hashedPassword = createHash("sha256").update(password).digest("hex");
 
-      const userRequested = await User.findByPk(userUpdatingUserId);
-      if (!userRequested || !userRequested.managePerm) {
-        return res
-          .status(403)
-          .json({ errors: [{ message: "User is not authorized" }] });
-      }
-
-      const existingUser = await User.findOne({ where: { privateNumber } });
-      if (existingUser) {
-        return res.status(422).json({
-          errors: [{ message: "User exists already, please login instead." }],
-        });
-      }
-
-      const hashedPassword = createHash("sha256")
-        .update(password)
-        .digest("hex");
-
-      const newUser = await User.create({
-        id,
-        privateNumber,
-        fullName,
-        password: hashedPassword,
-        commandId,
-        editPerm,
-        managePerm,
-      });
-
-      res.status(201).json(newUser);
-    } catch (err: any) {
-      res.status(422).json({
-        errors: [
-          {
-            message: err.message,
-            detail: err.detail,
-            constraint: err.constraint,
-            schema: err.schema,
-            table: err.table,
-          },
-        ],
-      });
-      next(err);
-    }
-  } catch (err: any) {
-    next(err);
+  try {
+    const newUser = await User.create({
+      id,
+      privateNumber,
+      fullName,
+      password: hashedPassword,
+      commandId,
+      editPerm,
+      managePerm,
+    });
+    res.status(201).json(newUser);
+  } catch (error) {
+    next(error);
   }
 };
 
@@ -472,6 +454,11 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
           .json({ errors: [{ message: "User is not authorized" }] });
       }
 
+      if (userUpdatingUserId === userId) {
+        return res
+          .status(409)
+          .json({ errors: [{ message: "user cannot delete himself" }] });
+      }
       const user = await User.findByPk(userId);
       if (!user) {
         return res.status(404).json({
@@ -485,7 +472,9 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
 
       await user.destroy();
 
-      res.status(200).json({ message: `User ${userId} deleted successfully.` });
+      res
+        .status(200)
+        .json({ message: `User ${user.fullName} deleted successfully.` });
     } catch (err: any) {
       res.status(422).json({
         errors: [

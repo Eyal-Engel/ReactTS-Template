@@ -7,6 +7,7 @@ export type User = {
   password: string;
   confirmPassword?: string;
   commandId: UUID;
+  command?: string;
   editPerm: boolean;
   managePerm: boolean;
 };
@@ -16,3 +17,7 @@ export type Command = {
   name: string;
   isNewSource: boolean;
 };
+
+// export type ErrorResponse = {
+
+// }

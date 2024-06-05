@@ -1,13 +1,11 @@
-import * as React from "react";
 import {
   DataGrid,
   GridActionsCellItem,
   GridColDef,
-  GridColTypeDef,
+  GridRowId,
 } from "@mui/x-data-grid";
 import Box from "@mui/material/Box";
-import Swal from "sweetalert2";
-import { useState, useEffect } from "react";
+
 import { useAuth } from "../../utils/hooks/useAuth";
 import { Command, User } from "../../utils/types/types";
 import { heIL } from "@mui/x-data-grid";
@@ -16,15 +14,21 @@ import DeleteIcon from "@mui/icons-material/DeleteOutlined";
 import LockIcon from "@mui/icons-material/Lock";
 import "./ManegeUsers.css";
 import { useMutation, useQuery, useQueryClient } from "react-query";
-import { createUser, getUserById, getUsers } from "../../utils/api/usersApi";
-import { Button, Theme } from "@mui/material";
-import LoadingButton from "@mui/lab/LoadingButton";
+import { deleteUser, getUsers } from "../../utils/api/usersApi";
+import { Theme } from "@mui/material";
 import { AxiosError } from "axios";
-import { createCommand, getCommands } from "../../utils/api/commandsApi";
+import { getCommands } from "../../utils/api/commandsApi";
 import CustomNoRowsOverlay from "../../components/TableUtils/CustomNoRowsOverlay";
 import { useTheme } from "@emotion/react";
 import CostumErrorOverlay from "../../components/TableUtils/CostumErrorOverlay";
 import CustomToolBarManageUsers from "../../components/TableUtils/costumToolBars/CustomToolBarManageUsers";
+import { toast } from "react-toastify";
+import SignupForm from "../../components/forms/SignupForm";
+import { useState } from "react";
+import {
+  UserDialogProvider,
+  useUserDialog,
+} from "../../utils/contexts/userDialogContext";
 
 export default function ManageUsers() {
   const { user: loggedUser } = useAuth();
@@ -32,83 +36,37 @@ export default function ManageUsers() {
   const usersQuery = useQuery<User[]>(["users"], getUsers, { retry: 1 });
   const commandsQuery = useQuery<Command[]>(["commands"], getCommands);
   const theme = useTheme();
+  const { open, setUserToEdit } = useUserDialog();
 
-  const newUserMutation = useMutation({
-    mutationFn: createUser,
-    onSuccess: () => queryClient.invalidateQueries(["users"]),
-    onError: (error: AxiosError, variables: User) => {
-      console.log(
-        "an error occurred: " +
-          error.message +
-          " with user: " +
-          variables.fullName
-      );
+  const deleteUserMutation = useMutation({
+    mutationFn: deleteUser,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(["users"]);
+      console.log(data.message);
+      toast.success(data.message);
+    },
+    onError: (error: AxiosError) => {
+      toast.error("לא ניתן למחוק את המשתמש");
     },
   });
 
-  const newCommandMutation = useMutation({
-    mutationFn: createCommand,
-    onSuccess: () => queryClient.invalidateQueries(["commands"]),
-    onError: (error: AxiosError, command: Command) => {
-      console.log(
-        "an error occurred: " + error.message + " with user: " + command.name
-      );
-    },
-  });
+  const handleEditClick = (id: GridRowId) => () => {
+    const userToEdit: User | undefined = usersQuery.data?.find(
+      (user) => user.id === id
+    );
 
-  const handleDeleteClick = (id: string) => async () => {
-    try {
-      if (!loggedUser) return;
+    if (!userToEdit) return;
+    setUserToEdit(userToEdit);
+    open();
+  };
 
-      if (id !== loggedUser.id) {
-        const userToDelete = usersQuery.data?.find((row) => row.id === id);
+  const handleDeleteClick = (id: GridRowId) => () => {
+    const userToDelete: User | undefined = usersQuery.data?.find(
+      (user) => user.id === id
+    );
 
-        if (!userToDelete) return;
-
-        const { fullName } = userToDelete;
-
-        const result = await Swal.fire({
-          title: `האם את/ה בטוח/ה שתרצה/י למחוק את המשתמש ${fullName}`,
-          text: "פעולה זאת איננה ניתנת לשחזור",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonColor: "#d33",
-          cancelButtonColor: "#3085d6",
-          confirmButtonText: "מחק משתמש",
-          cancelButtonText: "בטל",
-          reverseButtons: true,
-          customClass: {
-            container: "swal-dialog-custom",
-          },
-        });
-
-        if (result.isConfirmed) {
-          // Delete user here
-          await Swal.fire({
-            title: `משתמש "${fullName}" נמחק בהצלחה!`,
-            icon: "success",
-            confirmButtonText: "אישור",
-            customClass: {
-              container: "swal-dialog-custom",
-            },
-          });
-        }
-      } else {
-        await Swal.fire({
-          title: `לא ניתן למחוק את המשתמש`,
-          text: "משתמש אינו יכול למחוק את עצמו",
-          icon: "error",
-          confirmButtonColor: "#3085d6",
-          confirmButtonText: "אישור",
-          reverseButtons: true,
-          customClass: {
-            container: "swal-dialog-custom",
-          },
-        });
-      }
-    } catch (error) {
-      console.log(error);
-    }
+    if (!userToDelete) return;
+    deleteUserMutation.mutate(userToDelete?.id);
   };
 
   const columns: GridColDef<User>[] = [
@@ -184,6 +142,7 @@ export default function ManageUsers() {
             label="Edit"
             className="textPrimary"
             color="primary"
+            onClick={handleEditClick(id)}
           />,
           <GridActionsCellItem
             icon={<LockIcon />}
@@ -194,6 +153,7 @@ export default function ManageUsers() {
             icon={<DeleteIcon />}
             label="Delete"
             color="error"
+            onClick={handleDeleteClick(id)}
           />,
         ];
       },
@@ -205,40 +165,8 @@ export default function ManageUsers() {
     return a.privateNumber.localeCompare(b.privateNumber);
   });
 
-  const newUser: User = {
-    fullName: "guy",
-    privateNumber: "2222222",
-    password: "123",
-    commandId: "736ac3b2-87d5-4f42-9619-17867915f619",
-    editPerm: true,
-    managePerm: true,
-  };
-
-  console.log(commandsQuery.data);
-  console.log(usersQuery);
   return (
     <Box className="manager_users_page">
-      {/* <LoadingButton
-        variant="contained"
-        color="primary"
-        loading={newUserMutation.isLoading}
-        onClick={() => newUserMutation.mutate(newUser)}
-      >
-        create user
-      </LoadingButton>
-      <LoadingButton
-        variant="contained"
-        color="primary"
-        loading={newCommandMutation.isLoading}
-        onClick={() =>
-          newCommandMutation.mutate({
-            name: "trololol",
-            isNewSource: true,
-          })
-        }
-      >
-        create command
-      </LoadingButton> */}
       <Box
         className="manage-users-container"
         sx={{
@@ -277,6 +205,7 @@ export default function ManageUsers() {
             },
           }}
         />
+        <SignupForm />
       </Box>
     </Box>
   );
