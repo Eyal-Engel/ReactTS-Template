@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from "express";
-import { validationResult } from "express-validator";
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
@@ -23,12 +22,6 @@ if (!secretKey) {
 // ************************************************************************************
 const getUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      console.error(errors.array());
-      return res.status(422).json(errors);
-    }
-
     const users = await User.findAll({
       include: [
         {
@@ -39,6 +32,7 @@ const getUsers = async (req: Request, res: Response, next: NextFunction) => {
       ],
     });
 
+    redisClient.setEx(req.originalUrl, 3600, JSON.stringify(users));
     res.status(200).json(users);
   } catch (err) {
     next(err);
@@ -54,15 +48,6 @@ export default getUsers;
 // METHOD: GET
 // ************************************************************************************
 const getUserById = async (req: Request, res: Response, next: NextFunction) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return (
-      res
-        .status(422)
-        // .json({ errors: [{ message: "Failed to delete user, try later." }] });
-        .json(errors)
-    );
-  }
   const userId = req.params.userId;
   try {
     const user = await User.findByPk(userId);
@@ -71,6 +56,10 @@ const getUserById = async (req: Request, res: Response, next: NextFunction) => {
         .status(404)
         .json({ errors: [{ message: `User with ID ${userId} not found.` }] });
     }
+
+    // Cache the result
+    redisClient.setEx(req.originalUrl, 3600, JSON.stringify(user));
+
     res.status(200).json(user);
   } catch (err) {
     next(err);
@@ -94,10 +83,6 @@ const getUserById = async (req: Request, res: Response, next: NextFunction) => {
 // Authorization: Bearer {TOKEN}
 // ************************************************************************************
 const signup = async (req: Request, res: Response, next: NextFunction) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(411).json({ errors });
-  }
   const id = uuidv4();
   const { privateNumber, fullName, password, commandId, editPerm, managePerm } =
     req.body;
@@ -153,6 +138,10 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
       editPerm,
       managePerm,
     });
+
+    // Invalidate cache for the user list
+    redisClient.del("/api/users");
+
     res.status(201).json(newUser);
   } catch (error) {
     next(error);
@@ -171,12 +160,6 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
 // Authorization: Bearer {TOKEN}
 // ************************************************************************************
 const login = async (req: Request, res: Response, next: NextFunction) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({ errors: [{ message: "Failed to delete user, try later." }] });
-  }
   const { privateNumber, password } = req.body;
 
   try {
@@ -238,12 +221,6 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 // Authorization: Bearer {TOKEN}
 // ************************************************************************************
 const updateUser = async (req: Request, res: Response, next: NextFunction) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({ errors: [{ message: "Failed to update user, try later." }] });
-  }
   const userId = req.params.userId;
   const { privateNumber, fullName, commandId, editPerm, managePerm } = req.body;
 
@@ -306,6 +283,11 @@ const updateUser = async (req: Request, res: Response, next: NextFunction) => {
       if (managePerm !== undefined) user.managePerm = managePerm;
 
       await user.save();
+
+      // Invalidate cache for the updated user
+      redisClient.del(`/api/users/${userId}`);
+      // Invalidate cache for the user list
+      redisClient.del("/api/users");
 
       res.status(200).json(user);
     } catch (err: any) {
@@ -390,6 +372,11 @@ const changePassword = async (
       user.password = hashedPassword;
       await user.save();
 
+      // Invalidate cache for the updated user
+      redisClient.del(`/api/users/${userId}`);
+      // Invalidate cache for the user list
+      redisClient.del("/api/users");
+
       res.status(200).json(user);
     } catch (err: any) {
       res.status(422).json({
@@ -421,13 +408,6 @@ const changePassword = async (
 // ************************************************************************************
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res
-        .status(422)
-        .json({ errors: [{ message: "Failed to delete user, try later." }] });
-    }
-
     const userId = req.params.userId;
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -471,6 +451,11 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
       }
 
       await user.destroy();
+
+      // Invalidate cache for the updated user
+      redisClient.del(`/api/users/${userId}`);
+      // Invalidate cache for the user list
+      redisClient.del("/api/users");
 
       res
         .status(200)
